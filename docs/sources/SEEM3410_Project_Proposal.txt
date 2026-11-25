@@ -1,0 +1,19 @@
+SEEM3410 Project Proposal: Lunch-Peak Checkout Policy at Café 330
+Team members: Lai Sin Hang 1155213900, Lee Ka Tung 1155212062
+1. Service system and improvement question
+We will study the checkout queue at Café 330 during the weekday lunch peak (12:00-13:30). Customers arrive at random, wait for a free cashier, pay, and leave. Our system boundary covers order-taking and payment only; food preparation, pickup and seating are excluded.
+Improvement question: During the lunch peak, which checkout policy keeps the 90th-percentile customer wait under 5 minutes at the lowest staffing cost?
+The primary measure is the 90th-percentile waiting time before service. Secondary measures are mean waiting time, cashier utilization, maximum queue length, and staffing cost per lunch period.
+2. Decision levers
+We will compare four policies in a 2×2 design, with current practice as the baseline. The two levers are the number of cashiers (2 or 3) and the queue structure (separate or pooled).
+When lines are separate, each customer joins the shorter line, with random tie-breaking. All other settings (arrival profile, service-time distribution, line-choice rule) stay the same across policies, so differences can be attributed to the two levers. This design also lets us see whether pooling matters more with 2 or 3 cashiers.
+3. Sources of randomness
+Customer arrivals: random interarrival times, with the arrival rate possibly varying across the 90-minute peak.
+Service times: random checkout duration for each customer.
+Line choice (separate-line policies): random tie-breaking when two lines are equally short.
+We will observe the checkout for about 15-20 minutes at peak time (repeated on another day if needed), recording arrival times and service start and end times. We will use these data to set the arrival rate and service-time distribution, check the fit where the sample allows, and label each input as observed or assumed. We will build a discrete-event simulation in Python and run at least 30 replications of the 90-minute peak per policy, using common random numbers and reporting paired differences with 95% confidence intervals. We will also test sensitivity to the arrival rate, service times and staffing cost.
+Policy | Cashiers | Queue structure
+Baseline | 2 | Separate lines (current practice)
+Policy A | 2 | One pooled line
+Policy B | 3 | Separate lines
+Policy C | 3 | One pooled line

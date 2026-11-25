@@ -1,0 +1,58 @@
+{
+  "root_seed": 3410,
+  "confirmation_seed": 93410,
+  "replications": 50,
+  "n_patients": 200,
+  "doctors": [
+    2,
+    3,
+    4
+  ],
+  "pharmacy_counters": 1,
+  "peak_limit": 240.0,
+  "target": 15.0,
+  "targets": [
+    10.0,
+    15.0,
+    20.0,
+    30.0
+  ],
+  "horizon": 1080.0,
+  "doctor_wage": 100.0,
+  "wage_factors": [
+    0.5,
+    1.0,
+    1.5,
+    2.0
+  ],
+  "overtime_premiums": [
+    1.0,
+    1.5,
+    2.0
+  ],
+  "arrival_factors": [
+    0.9,
+    1.1
+  ],
+  "doctor_service_factors": [
+    0.9,
+    1.1
+  ],
+  "pharmacy_service_factor": 1.1,
+  "primary_model": "empirical",
+  "quantile_method": "linear",
+  "time_decimals": 9,
+  "tolerance": 1e-08,
+  "baseline_scenario": "Baseline_2Doc_240Peak",
+  "team": [
+    [
+      "Lai Sin Hang",
+      "1155213900"
+    ],
+    [
+      "Lee Ka Tung",
+      "1155212062"
+    ]
+  ],
+  "source_url": "https://www.kaggle.com/datasets/juneminazuki/hospital-queue-and-patient-flow-simulation"
+}

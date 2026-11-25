@@ -1,0 +1,9 @@
+# Source review before implementation
+- Main implementation specification: SEEM3410_CODEX_MASTER_CHECKLIST.md, copied unchanged to docs/sources.
+- archive.zip contains hospital_sim_6_scenarios.csv only. Loaded without extraction/editing. Expected shape and scenario/run structure independently checked in data_audit.json.
+- Current proposal: SEEM3410_Project_Proposal (1).docx, hospital staffing, team Lai Sin Hang1155213900 / Lee Ka Tung1155212062. Primary metric is average of all-200-patient run P90s; 2/3/4 doctors; priorities and FCFS pharmacy; fresh input generation; matched experiments.
+- Superseded unnumbered proposal concerns Café330. Its policies are not implemented.
+- Three-page Team Project Guidelines: <=8 A4 pages total, >=11pt, >=2cm margins, page numbers, title/team on first page, separate PDF and ZIP, seven suggested sections, 150–200-word brief. Submission before1December; assigned 10-minute presentation1 or3December. Arrangements require team confirmation.
+- Six supplied SEEM3410_Week*_Teaching PDFs were extracted with page markers and reviewed for scope, capacity, FEL, ties, random inputs, heapq, output CIs, empirical calibration, time variation, CRN, paired differences, factorial effects and fresh confirmation. Method locations and application are documented in course_mapping.md. Generic LectureNotes01–06 PDFs belong to SEEM3580, so they are excluded from the project sources.
+- No Hospital_Project_Starter ZIP or hospital Python implementation found. Read-only keyword scan of available Python files found unrelated hospital interview-preparation scripts; those are not project code and were not executed or copied.
+- Text extraction copies and original project PDFs/DOCX files are retained for traceability. Dataset license and original generator documentation were not supplied. No claim of external validation or documentary proof of source queue code is made.

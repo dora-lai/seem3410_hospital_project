@@ -1,0 +1,997 @@
+
+PAGE 1
+1
+SEEM3410 System Modeling and
+Simulation
+Week 3:
+Discrete-Event Simulation Fundamentals
+W eiliang Liu
+Department of SEEM
+The Chinese University of Hong Kong
+2026–27 T erm 1
+
+PAGE 2
+WEEK 3 ROADMAP 2
+Week 3 Roadmap
+1 Introduction to Discrete-Event Simulation
+2 Key Components of Discrete-Event Simulation
+3 M/M/ 1 Queue Simulation by Hand
+4 Random Input Generation
+
+PAGE 3
+1 INTRODUCTION TO DISCRETE-EVENT SIMULATION 3
+1 What is simulation?
+Consider a single-server queue . Customers
+arrive over time, each requiring service that
+lasts for a certain duration. Whenever the
+server becomes free, she immediately begins
+serving the next waiting customer.
+Suppose you are a prophet : you know every customer’s arrival time and service
+duration in advance.
+Could you determine the queue length at any time? Yes.
+• Record events in time order: arrivals, service starts, and completions.
+• At each event, update system state : who is waiting and who is in service.
+• Given the initial state and service rules, these prophet inputs determine one
+sample path of the system evolution .
+• However, such bookkeeping becomes tedious for large systems.
+Computer simulation uses code to automate this bookkeeping. One
+execution based on one set of inputs is called a simulation run .
+
+PAGE 4
+1 INTRODUCTION TO DISCRETE-EVENT SIMULATION 4
+A single-server queue sample path
+In this example, the system is initially empty, and only three customers will arrive.
+• Prophet inputs: arrival times 0 , 1 , 2 min; service durations 3 , 2 , 1 min.
+• The resulting sample path:
+t (min)
+Q ( t ) : number waiting
+0 1 2 3 4 5
+1
+2
+Arrival 1
+Service start 1
+Arrival 2 Arrival 3 Completion 1
+Service start 2
+Completion 2
+Service start 3
+• For this simulation run, the average queue length over [0 , 5] minutes is
+¯Q =
+∫
+5
+0
+Q ( t ) dt
+5
+=
+0(1) + 1(1) + 2(1) + 1(2)
+5
+= 1 customer .
+
+PAGE 5
+1 INTRODUCTION TO DISCRETE-EVENT SIMULATION 5
+Random inputs and repeated runs
+That average comes from one set of inputs. In practice, arrival times and service
+durations are uncertain, so we describe them using probability distributions .
+1. For each simulation run, the prophet draws fresh inputs from these
+distributions .
+2. Apply the bookkeeping rules to produce one possible sample path of the
+system trajectory. Calculate performance measures from this trajectory.
+3. Repeat with independent input draws for each run, while keeping the model,
+probability distributions, and system initial conditions the same.
+Repeated runs let us assess average performance and variability .
+4. For each run, a simulation program can generate inputs in advance or as it
+needs them.
+
+PAGE 6
+1 INTRODUCTION TO DISCRETE-EVENT SIMULATION 6
+Discrete-event simulation
+For the single-server example, the bookkeeping within each run consititues a
+discrete-event simulation (DES) .
+• DES represents the operation of a system as a discrete sequence of events in
+time.
+• Each event occurs at a particular time point and marks a change of state in
+the system, such as a customer arrival, a service start, or completion.
+• The state describes the system at a given time, such as the number of
+customers waiting and whether the server is busy.
+Between consecutive events, no change in the system occurs, so the simulation
+clock can directly jump to the occurrence time of the next event .
+• This feature makes DES more eﬀicient than incremental-time simulation ,
+where time is broken up into small time slices and the system state is updated
+according to the set of events happening in the time slice.
+• This is because not every time slice has to be simulated .
+
+PAGE 7
+1 INTRODUCTION TO DISCRETE-EVENT SIMULATION 7
+Continuous and discrete-event models
+• DES contrasts with continuous simulation in which the system state is
+changed continuously over time on the basis of a set of differential equations
+defining the rates of change for state variables.
+Continuous model Discrete-event model
+Example Water level under a
+continuous net flow
+A single-server queue
+State
+evolution
+The level changes
+continuously over time
+The number present changes
+at arrivals and completions
+Description A rate of change expressed
+by a differential equation
+State changes associated with
+particular events
+• Another continuous-model example is the Navier–Stokes differential
+equations for fluid velocity and pressure over continuous space and time.
+• Fun fact in AI frontier: On 8 September 2026, OpenAI announced a claimed
+solution to the related Millennium Prize Problem , proving that the equations
+can develop a singularity in finite time.
+
+PAGE 8
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 8
+2 Key Components of Discrete-Event
+Simulation
+A discrete-event simulation has the following key components:
+Component Question it answers
+1. State What is the status of the system now?
+2. Future-event list What is scheduled to happen next?
+3. Event routine How to update the state when an event happens?
+4. Clock What is the current simulated time?
+5. Statistics What performance measures do we record?
+6. Ending condition When is this run finished?
+7. Random-number generators Where do new input values come from?
+
+PAGE 9
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 9
+1. State: what is the status of the system now?
+t
+Q ( t ) : waiting
+0 1 2 3 4 5
+1
+2
+A 1 & B 1 A 2 A 3 D 1 & B 2 D 2 & B 3
+A i : arrival; B i : service start; D i : service completion
+At t = 2 : customer 1 is in service;
+customers 2 and 3 are waiting in queue.
+State Snapshot at t = 2
+Server status B ( t ) B = 1 (busy), B = 0 means idle
+Queue status vector one triplet ( i, a i , s i ) per waiting customer, where
+i is customer ID, a i is arrival time, and s i is
+service duration. Here: [(2 , 1 , 2) , (3 , 2 , 1)] .
+Queue length Q ( t ) Number of waiting-customer records: Q = 2
+System size N ( t ) Waiting plus in service: N = Q + B = 3
+Queue length and system size can be inferred from server status and queue status.
+
+PAGE 10
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 10
+State: why is it helpful?
+1. Compute performance measures.
+For example, tracking Q ( t ) and how long it stays at each value lets us compute the
+average queue length over a run of length T :
+¯Q =
+1
+T
+∫
+T
+0
+Q ( t ) dt =
+area under the queue-length path
+T
+.
+2. Determine how the system evolves at each event.
+When customer i arrives at t = a i , use the state just before the arrival :
+Server status Action and state update
+B ( t ) = 0 (idle) Customer i enters service immediately. Set B to 1.
+The queue status vector stays unchanged.
+B ( t ) = 1 (busy) Customer i joins the queue. Append ( i, a i , s i ) to the
+queue status vector. Q increases by 1, and B stays 1.
+Example: customer 3 arrives at t = 2 while B = 1 . The queue status vector
+changes from [(2 , 1 , 2)] to [(2 , 1 , 2) , (3 , 2 , 1)] , so Q changes from 1 to 2.
+
+PAGE 11
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 11
+2. Future-event list: what happens next?
+The future-event list (FEL) records pending events that await execution. Each
+entry stores an event time and an event type , e.g., (2 , A 3 ) means customer 3
+arrives at t = 2 .
+Its role in the simulation loop:
+1. Select the earliest event time , advance the clock to that time, and remove
+the entry from the FEL.
+2. The event type determines the routine used to update the system state .
+3. Add entries scheduled by the event routine; retain other pending entries and
+repeat.
+t
+Q ( t ) : waiting
+0 1 2 3 4 5
+1
+2
+A 1 & B 1 A 2 A 3 D 1 & B 2 D 2 & B 3
+A i : arrival; B i : service start; D i : service completion
+At t = 1 : the first entry (2 , A 3 ) tells the
+simulator to advance to t = 2 and use
+the arrival routine for customer 3.
+Schedule as needed: add the next arrival after an arrival, and a completion when
+service starts. This keeps the FEL short, saving event-list memory.
+
+PAGE 12
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 12
+Future-event list: how it is updated in the queue example
+Initially, FEL = [(0 , A 1 )] . Process its earliest entry at each step.
+t
+Q ( t ) : waiting
+0 1 2 3 4 5
+1
+2
+A 1 & B 1 A 2 A 3 D 1 & B 2 D 2 & B 3
+A i : arrival; B i : service start; D i : service completion
+At t = 0 : customer 1 arrives and starts
+service. Add D 1 at t = 0 + 3 = 3 and
+the next arrival A 2 at t = 1 .
+Crossed out: removed. Purple underline: newly added. Plain: retained.
+Time FEL: remove earliest FEL after update
+0 [ (0 , A 1 ) ] [ (1 , A 2 ) , (3 , D 1 ) ]
+1 [ (1 , A 2 ) , (3 , D 1 )] [ (2 , A 3 ) , (3 , D 1 )]
+2 [ (2 , A 3 ) , (3 , D 1 )] [(3 , D 1 )]
+3 [ (3 , D 1 ) ] [ (5 , D 2 ) ]
+• At t = 2 , no more arrivals.
+• At t = 3 , customer 2 starts service, so add D 2 at t = 3 + 2 = 5 .
+
+PAGE 13
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 13
+Future-event list: Why service starts need no separate FEL
+entry?
+In our implementation, service starts are immediate actions within the arrival and
+completion routines .
+t
+Q ( t ) : waiting
+0 1 2 3 4 5
+1
+2
+A 1 & B 1 A 2 A 3 D 1 & B 2 D 2 & B 3
+A i : arrival; B i : service start; D i : service completion
+Follow customer 2: arrives at t = 1 ,
+waits until t = 3 , then receives 2
+minutes of service. At t = 3 , D 1 and B 2
+occur together.
+1. At t = 1 , process A 2 : the server is busy, so customer 2 joins the waiting
+queue.
+2. At t = 3 , process D 1 : customer 1 leaves. The completion routine
+immediately starts customer 2 ( B 2 ), then schedules D 2 at 3 + 2 = 5 .
+3. At t = 5 , process D 2 : customer 2 leaves and customer 3 starts service ( B 3 ).
+The D 1 routine executes B 2 at the same simulated time . We need no
+separate FEL entry for B 2 .
+Reading: Banks et al., §3.1, pp. 61–63 and 66.
+
+PAGE 14
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 14
+Future-event list: a rule for simultaneous events
+Need to specify a tie-breaking rule for processing events with identical event time .
+t
+Q ( t ) : waiting
+0 1 2 3 4 5
+1
+2
+A 1 & B 1 A 2 A 3 D 1 & B 2 D 2 & B 3
++ A 4
+A i : arrival; B i : service start; D i : service completion
+Add customer 4’s arrival at t = 5 . Now
+D 2 and A 4 has the same timestamp.
+Just before t = 5 , customer 2 is in service and customer 3 waits ( Q = 1 ).
+Tie rule Actions at t = 5 Queue length
+Completion first D 2 , immediate B 3 , then A 4 1 → 0 → 1
+Arrival first A 4 , then D 2 and B 3 1 → 2 → 1
+Both rules end with Q = 1 : customer 3 in service, customer 4 waiting.
+Different model: no waiting room. Arrivals finding a busy server leave unserved.
+Completion-first admits the tied arrival; arrival-first rejects it.
+The tie rule can materially change outcomes. It is a modeling assumption that
+must reflect the intended system behavior.
+
+PAGE 15
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 15
+3. Event routine: model-specific simulation logic
+An event routine specifies what to do when a particular type of event occurs. It
+implements the logic of the simulation model .
+• The simulator selects and removes the earliest FEL entry, advances the clock,
+and calls the routine for that event type.
+• The routine uses the current state and inputs to update the state , update
+the FEL , and record customer outcomes .
+t
+Q ( t ) : waiting
+0 1 2 3 4 5
+1
+2
+A 1 & B 1 A 2 A 3 D 1 & B 2 D 2 & B 3
+A i : arrival; B i : service start; D i : service completion
+At t = 3 , call the completion routine :
+customer 1 leaves; customer 2 starts
+service; insert (5 , D 2 ) to the FEL.
+Why model-specific? An arrival finding a busy server joins the queue here, but
+leaves unserved in a no-waiting-room model, so the arrival routine must change.
+
+PAGE 16
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 16
+Event routine example: arrival of customer i
+• Suppose that the earliest entry in the FEL is ( t, A i ) , i.e., arrival of customer i
+at time t .
+• The simulation advances its clock to t , removes ( t, A i ) from the FEL, and
+invokes the following arrival routine :
+1. Record customer i ’s arrival time a i , and its spplied service duration s i .
+2. If server idle: set B = 1 and assign customer i to the server. Record service
+start b i = t and wait w i = 0 . Insert ( t + s i , D i ) to the FEL.
+3. Otherwise: append ( i, a i , s i ) to the end of the queue status vector.
+4. If another arrival exists, insert ( a i +1 , A i +1 ) to the FEL.
+
+PAGE 17
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 17
+Event routine example: service completion of customer i
+• Suppose that the earliest entry in the FEL is ( t, D i ) , i.e., service completion of
+customer i at time t .
+• The simulation advances its clock to t , removes ( t, D i ) from the FEL, and
+invokes the following completion routine :
+1. Record customer i ’s departure time d i = t , and time-in-system v i = d i − a i .
+2. If the queue is nonempty: remove its first customer, say j , and start their
+service immediately. Record b j = t and wait w j = t − a j ; keep B = 1 and
+insert ( t + s j , D j ) to the FEL.
+3. Otherwise: set B = 0 .
+A completion creates a new completion event only if another service starts . All
+actions above occur at the same simulated time t .
+
+PAGE 18
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 18
+4. Clock: where are we in simulated time?
+The simulation clock records the current simulation time. Its next value comes
+from the earliest event in the FEL .
+t
+Q ( t ) : waiting
+0 1 2 3 4 5
+1
+2
+A 1 & B 1 A 2 A 3 D 1 & B 2 D 2 & B 3
+A i : arrival; B i : service start; D i : service completion
+At t = 2 : FEL = { (3 , D 1 ) } . Advance to
+time t = 3 and process D 1 .
+• Throughout t ∈ [2 , 3) , B ( t ) = 1 and Q ( t ) = 2 . The state stays unchanged, so
+no updates are needed, and the clock can jump directly to t = 3 .
+• Event times need not be integers. They depend on inputs.
+
+PAGE 19
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 19
+Clock: simulated time vs. computer running time
+Important: distinguish simulated time from computer running time .
+• Simulated time measures how much time has elapsed in the system being
+simulated.
+• Computer running time measures how long the computer actually takes to
+perform the simulation.
+• In one second of computer running time, the simulation may advance by days,
+years, or even centuries.
+• This ability to compress time is one reason simulation is so useful: we can
+study long-term system behavior without waiting for the same amount of real
+time to pass.
+A playful analogy: “ 天上一年，地上百年 ”—one year in one world may correspond
+to a hundred years in another.
+If our world were itself a simulation created by higher-dimensional beings, perhaps
+our “years” of simulated time could pass within seconds of their computer running
+time!
+
+PAGE 20
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 20
+5. Statistics: recording system performance
+While state describes the system now , statistics keep track of how the system has
+performed during the run.
+We keep two types of statistical records:
+Record type What we retain Performance measures
+Customer records Each customer’s waiting
+time and time in system
+Customer averages : mean
+waiting time and mean
+time in system
+Accumulated
+performance
+measures
+Queue area and server
+busy time accumulated
+during the run
+Time averages : average
+queue length and server
+utilization
+• Customer averages: divide the total by the number of customers.
+• Time averages: divide an accumulated time area by the simulation duration.
+
+PAGE 21
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 21
+Statistics: customer records
+A customer record table stores each customer’s inputs and observed outcomes. It
+lets us calculate customer averages , such as mean waiting time.
+t
+Q ( t ) : waiting
+0 1 2 3 4 5
+1
+2
+A 1 & B 1 A 2 A 3 D 1 & B 2 D 2 & B 3
+A i : arrival; B i : service start; D i : service completion
+At t = 3 , after D 1 and B 2 : customer 1
+has left; customer 2 is in service;
+customer 3 waits.
+The record table at t = 3 is as follows, where a dash means not yet observed .
+Customer i a i s i start b i wait w i compl. d i sys. time v i
+1 0 3 0 0 3 3
+2 1 2 3 2 — —
+3 2 1 — — — —
+• a i , s i are inputs (minutes).
+• At service start, record b i = t and waiting time w i = b i − a i .
+• At completion, record d i = t and system time v i = d i − a i .
+
+PAGE 22
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 22
+Statistics: accumulate performance measures
+Initialize at t = 0 : set queue area A Q = 0 and busy time A B = 0 .
+t
+Q ( t ) : waiting
+0 1 2 3 4 5
+1
+2
+A 1 & B 1 A 2 A 3 D 1 & B 2 D 2 & B 3
+A i : arrival; B i : service start; D i : service completion
+From t = 2 to t = 3 : add
+Q old ∆ t = 2(3 − 2) = 2
+customer-minutes to A Q and
+B old ∆ t = 1(3 − 2) = 1 minute to A B .
+Accumulate Update rule Time average
+Queue area A Q Add Q old ∆ t Average queue length: A Q /T
+Busy time A B Add B old ∆ t Server utilization: A B /T
+Here, T is the ending simulation time for a run starting at t = 0 .
+
+PAGE 23
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 23
+6. Ending condition: when is a run finished?
+t
+Q ( t ) : waiting
+0 1 2 3 4 5 6
+1
+2
+A 1 & B 1 A 2 A 3 D 1 & B 2 D 2 & B 3 D 3
+A i : arrival; B i : service start; D i : service completion
+Two possible endpoints: t = 5 vs. t = 6
+customer 3 starts at t = 5 and
+completes at t = 6 (gray extension).
+The queue is empty on [5 , 6) , but the
+server is still busy.
+Choose a stopping rule before running the simulation:
+• A specified number of events: stop after a given number of events, e.g.,
+three service starts, at t = 5 ; three service completions, at t = 6 .
+• A fixed horizon: stop at a given simulation horizon T . For a fixed horizon, the
+simulation processes events strictly before T and includes the last interval up
+to T in the statistics.
+
+PAGE 24
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 24
+7. Random-number generators: supplying the inputs
+The simulation can use inputs generated in advance or request fresh random
+draws on the fly.
+t
+Q ( t ) : waiting
+0 1 2 3 4 5
+1
+2
+A 1 & B 1 A 2 A 3 D 1 & B 2 D 2 & B 3
+A i : arrival; B i : service start; D i : service completion
+In our example, we have assumed
+pre-generated arrival times (0 , 1 , 2) and
+services durations (3 , 2 , 1) .
+Nonetheless, it is generally more eﬀicient to generate fresh draws as needed in the
+event routines:
+• Next arrival: in the arrival routine, draw interarrival time X i , and schedule
+a i +1 = a i + X i .
+• Service completion: in the service routine, draw service duration S i , and
+when service starts at b i , schedule its completion at b i + S i .
+• For an M/M/ 1 model, X i ∼ exp( λ ) and S i ∼ exp( µ )
+• A pseudorandom-number generator permits reproducibility; more details in
+Section 4.
+
+PAGE 25
+2 KEY COMPONENTS OF DISCRETE-EVENT SIMULATION 25
+DES overall logic: piecing together all components
+Initialize once
+• Set the clock t = 0 , initial state , and statistics ; specify the ending condition .
+• Set the input source (supplied values or random-number generators ); put the
+initial events into the FEL .
+Repeat the event loop
+1. If the ending condition is met or the FEL is empty, leave the loop.
+2. Select the earliest event e in the FEL, with event time t e . For a fixed horizon
+T , if t e ≥ T , leave the loop without processing e .
+3. Accumulate time-based statistics over [ t, t e ) using the old state ; then advance
+the clock to t e .
+4. Remove e from the FEL and call its event routine : update state and statistics
+records, obtain inputs as needed, and update the FEL. Return to step 1.
+Finish and report
+Compute performance measures from the statistics and report the results.
+
+PAGE 26
+3 M/M/ 1 QUEUE SIMULATION BY HAND 26
+3 M/M/ 1 Queue Simulation by Hand
+Apply the DES logic to simulate the single-server queue with the following inputs:
+Customer i 1 2 3 4 5
+Arrival time a i (min) 0 1 2 5 7
+Service duration s i (min) 3 2 1 2 1
+• Simulation horizon: [0 , T ) , where T = 10 min; no arrivals after customer 5.
+• FEL tie rule: process completions before arrivals at the same time.
+• State: server status B ∈ { 0 , 1 } and waiting records ( i, a i , s i ) for every
+customer i in queue. Inferred queue length Q , and system size N = B + Q .
+• Statistics: ( b i , d i , w i , v i ) ; b i is service start time, d i is completion time,
+w i = b i − a i is waiting time, and v i = d i − a i is time in system.
+
+PAGE 27
+3 M/M/ 1 QUEUE SIMULATION BY HAND 27
+Initialize once: before processing the first arrival
+• Clock and state: t = 0 ; server idle; waiting list [ ] ; ( B, Q, N ) = (0 , 0 , 0) .
+• Statistics: A Q = 0 , A B = 0 ; initialize the customer-record table below.
+• Inputs and FEL: use the supplied table; schedule the first arrival:
+FEL = { (0 , A 1 ) } .
+• Stopping: leave the loop if t ≥ T or FEL is empty.
+Record statistics as events occur (— means not yet recorded): enter a i , s i at
+arrival, b i , w i = b i − a i at service start, and d i , v i = d i − a i at completion.
+Initial customer records :
+Customer i a i s i start b i wait w i compl. d i sys. time v i
+1 — — — — — —
+2 — — — — — —
+3 — — — — — —
+4 — — — — — —
+5 — — — — — —
+
+PAGE 28
+3 M/M/ 1 QUEUE SIMULATION BY HAND 28
+Iteration 1: arrival A 1 at t = 0
+Before: t = 0 ; in service: none; waiting [ ] ; ( B, Q, N ) = (0 , 0 , 0) .
+1. Check stopping: 0 < 10 and FEL is nonempty: continue.
+2. Select earliest event: e = A 1 , t e = 0 < 10 ; keep e in the FEL for now.
+3. Accumulate statistics, then advance clock: ∆ t = 0 − 0 = 0 . Using the old
+state, A Q = 0 + 0 × 0 = 0 , A B = 0 + 0 × 0 = 0 ; then t : 0 → 0 .
+4. Remove event and run routine:
+• Remove A 1 ; because the event is an arrival, record ( a 1 , s 1 ) .
+• Because B = 0 , start serving customer 1 and record ( b i , w i ) ;
+• schedule D 1 at t = b 1 + s 1 = 3 and the next arrival A 2 at t = a 2 = 1 .
+After: in service: customer 1; waiting [ ] ; ( B, Q, N ) = (1 , 0 , 1) .
+FEL: { (0 , A 1 ) } − → { (1 , A 2 ) , (3 , D 1 ) } .
+Customer records after step 4 (purple = newly recorded):
+Customer i a i s i start b i wait w i compl. d i sys. time v i
+1 0 3 0 0 — —
+2 — — — — — —
+3 — — — — — —
+4 — — — — — —
+5 — — — — — —
+
+PAGE 29
+3 M/M/ 1 QUEUE SIMULATION BY HAND 29
+Iteration 2: arrival A 2 at t = 1
+Before: t = 0 ; in service: customer 1; waiting [ ] ; ( B, Q, N ) = (1 , 0 , 1) .
+1. Check stopping: 0 < 10 and FEL is nonempty: continue.
+2. Select earliest event: e = A 2 , t e = 1 < 10 ; keep e in the FEL for now.
+3. Accumulate statistics, then advance clock: ∆ t = 1 − 0 = 1 . Using the old
+state, A Q = 0 + 0 × 1 = 0 , A B = 0 + 1 × 1 = 1 ; then t : 0 → 1 .
+4. Remove event and run routine:
+• Remove A 2 ; because this is an arrival, record ( a 2 , s 2 ) = (1 , 2) .
+• Because B = 1 , append (2 , 1 , 2) to the waiting list.
+• Schedule the next arrival A 3 for t = a 3 = 2 .
+After: in service: customer 1; waiting [(2 , 1 , 2)] ; ( B, Q, N ) = (1 , 1 , 2) .
+FEL: { (1 , A 2 ) , (3 , D 1 ) } − → { (2 , A 3 ) , (3 , D 1 ) } .
+Customer records after step 4 (purple = newly recorded):
+Customer i a i s i start b i wait w i compl. d i sys. time v i
+1 0 3 0 0 — —
+2 1 2 — — — —
+3 — — — — — —
+4 — — — — — —
+5 — — — — — —
+
+PAGE 30
+3 M/M/ 1 QUEUE SIMULATION BY HAND 30
+Iteration 3: arrival A 3 at t = 2
+Before: t = 1 ; in service: customer 1; waiting [(2 , 1 , 2)] ; ( B, Q, N ) = (1 , 1 , 2) .
+1. Check stopping: 1 < 10 and FEL is nonempty: continue.
+2. Select earliest event: e = A 3 , t e = 2 < 10 ; keep e in the FEL for now.
+3. Accumulate statistics, then advance clock: ∆ t = 2 − 1 = 1 . Using the old
+state, A Q = 0 + 1 × 1 = 1 , A B = 1 + 1 × 1 = 2 ; then t : 1 → 2 .
+4. Remove event and run routine:
+• Remove A 3 ; because this is an arrival, record ( a 3 , s 3 ) = (2 , 1) .
+• Because B = 1 , append (3 , 2 , 1) to the waiting list.
+• Schedule the next arrival A 4 for t = a 4 = 5 .
+After: in service: customer 1; waiting [(2 , 1 , 2) , (3 , 2 , 1)] ; ( B, Q, N ) = (1 , 2 , 3) .
+FEL: { (2 , A 3 ) , (3 , D 1 ) } − → { (3 , D 1 ) , (5 , A 4 ) } .
+Customer records after step 4 (purple = newly recorded):
+Customer i a i s i start b i wait w i compl. d i sys. time v i
+1 0 3 0 0 — —
+2 1 2 — — — —
+3 2 1 — — — —
+4 — — — — — —
+5 — — — — — —
+
+PAGE 31
+3 M/M/ 1 QUEUE SIMULATION BY HAND 31
+Iteration 4: completion D 1 at t = 3
+Before: t = 2 ; in service: customer 1; waiting [(2 , 1 , 2) , (3 , 2 , 1)] ;
+( B, Q, N ) = (1 , 2 , 3) .
+1. Check stopping: 2 < 10 and FEL is nonempty: continue.
+2. Select earliest event: e = D 1 , t e = 3 < 10 ; keep e in the FEL for now.
+3. Accumulate statistics, then advance clock: ∆ t = 3 − 2 = 1 . Using the old
+state, A Q = 1 + 2 × 1 = 3 , A B = 2 + 1 × 1 = 3 ; then t : 2 → 3 .
+4. Remove event and run routine:
+• Remove D 1 ; because this is a completion, record ( d 1 , v 1 ) = (3 , 3) .
+• Because Q = 2 > 0 , remove customer 2 from the waiting list and start
+service. Record ( b 2 , w 2 ) = (3 , 2) ; keep B = 1 .
+• Schedule D 2 for t = b 2 + s 2 = 3 + 2 = 5 .
+After: in service: customer 2; waiting [ (2 , 1 , 1) , (3 , 2 , 1)] ; ( B, Q, N ) = (1 , 1 , 2) .
+FEL: { (3 , D 1 ) , (5 , A 4 ) } − → { (5 , D 2 ) , (5 , A 4 ) } .
+Customer records after step 4 (purple = newly recorded):
+Customer i a i s i start b i wait w i compl. d i sys. time v i
+1 0 3 0 0 3 3
+2 1 2 3 2 — —
+3 2 1 — — — —
+4 — — — — — —
+5 — — — — — —
+
+PAGE 32
+3 M/M/ 1 QUEUE SIMULATION BY HAND 32
+Iteration 5: completion D 2 at t = 5
+Before: t = 3 ; in service: customer 2; waiting [(3 , 2 , 1)] ; ( B, Q, N ) = (1 , 1 , 2) .
+1. Check stopping: 3 < 10 and FEL is nonempty: continue.
+2. Select earliest event: e = D 2 , t e = 5 < 10 ; keep e in the FEL for now. D 2
+precedes A 4 by the tie rule.
+3. Accumulate statistics, then advance clock: ∆ t = 5 − 3 = 2 . Using the old
+state, A Q = 3 + 1 × 2 = 5 , A B = 3 + 1 × 2 = 5 ; then t : 3 → 5 .
+4. Remove event and run routine:
+• Remove D 2 ; because this is a completion, record ( d 2 , v 2 ) = (5 , 4) .
+• Because Q = 1 > 0 , remove customer 3 from the queue and start service.
+Record ( b 3 , w 3 ) = (5 , 3) ; keep B = 1 .
+• Schedule D 3 for t = b 3 + s 3 = 5 + 1 = 6 .
+After: in service: customer 3; waiting [ (3 , 2 , 1) ] ; ( B, Q, N ) = (1 , 0 , 1) .
+FEL: { (5 , D 2 ) , (5 , A 4 ) } − → { (5 , A 4 ) , (6 , D 3 ) } .
+Customer records after step 4 (purple = newly recorded):
+Customer i a i s i start b i wait w i compl. d i sys. time v i
+1 0 3 0 0 3 3
+2 1 2 3 2 5 4
+3 2 1 5 3 — —
+4 — — — — — —
+5 — — — — — —
+
+PAGE 33
+3 M/M/ 1 QUEUE SIMULATION BY HAND 33
+Iteration 6: arrival A 4 at t = 5
+Before: t = 5 ; in service: customer 3; waiting [ ] ; ( B, Q, N ) = (1 , 0 , 1) .
+1. Check stopping: 5 < 10 and FEL is nonempty: continue.
+2. Select earliest event: e = A 4 , t e = 5 < 10 ; keep e in the FEL for now.
+3. Accumulate statistics, then advance clock: ∆ t = 5 − 5 = 0 . Using the old
+state, A Q = 5 + 0 × 0 = 5 , A B = 5 + 1 × 0 = 5 ; then t : 5 → 5 .
+4. Remove event and run routine:
+• Remove A 4 ; because this is an arrival, record ( a 4 , s 4 ) = (5 , 2) .
+• Because B = 1 , append (4 , 5 , 2) to the queue.
+• Schedule the next arrival A 5 for t = a 5 = 7 .
+After: in service: customer 3; waiting [(4 , 5 , 2)] ; ( B, Q, N ) = (1 , 1 , 2) .
+FEL: { (5 , A 4 ) , (6 , D 3 ) } − → { (6 , D 3 ) , (7 , A 5 ) } .
+Customer records after step 4 (purple = newly recorded):
+Customer i a i s i start b i wait w i compl. d i sys. time v i
+1 0 3 0 0 3 3
+2 1 2 3 2 5 4
+3 2 1 5 3 — —
+4 5 2 — — — —
+5 — — — — — —
+
+PAGE 34
+3 M/M/ 1 QUEUE SIMULATION BY HAND 34
+Iteration 7: completion D 3 at t = 6
+Before: t = 5 ; in service: customer 3; waiting [(4 , 5 , 2)] ; ( B, Q, N ) = (1 , 1 , 2) .
+1. Check stopping: 5 < 10 and FEL is nonempty: continue.
+2. Select earliest event: e = D 3 , t e = 6 < 10 ; keep e in the FEL for now.
+3. Accumulate statistics, then advance clock: ∆ t = 6 − 5 = 1 . Using the old
+state, A Q = 5 + 1 × 1 = 6 , A B = 5 + 1 × 1 = 6 ; then t : 5 → 6 .
+4. Remove event and run routine:
+• Remove D 3 ; because this is a completion, record ( d 3 , v 3 ) = (6 , 4) .
+• Because Q = 1 > 0 , remove customer 4 from the queue and start service.
+Record ( b 4 , w 4 ) = (6 , 1) ; keep B = 1 .
+• Schedule D 4 for t = b 4 + s 4 = 6 + 2 = 8 .
+After: in service: customer 4; waiting [ (4 , 5 , 2) ] ; ( B, Q, N ) = (1 , 0 , 1) .
+FEL: { (6 , D 3 ) , (7 , A 5 ) } − → { (7 , A 5 ) , (8 , D 4 ) } .
+Customer records after step 4 (purple = newly recorded):
+Customer i a i s i start b i wait w i compl. d i sys. time v i
+1 0 3 0 0 3 3
+2 1 2 3 2 5 4
+3 2 1 5 3 6 4
+4 5 2 6 1 — —
+5 — — — — — —
+
+PAGE 35
+3 M/M/ 1 QUEUE SIMULATION BY HAND 35
+Iteration 8: arrival A 5 at t = 7
+Before: t = 6 ; in service: customer 4; waiting [ ] ; ( B, Q, N ) = (1 , 0 , 1) .
+1. Check stopping: 6 < 10 and FEL is nonempty: continue.
+2. Select earliest event: e = A 5 , t e = 7 < 10 ; keep e in the FEL for now.
+3. Accumulate statistics, then advance clock: ∆ t = 7 − 6 = 1 . Using the old
+state, A Q = 6 + 0 × 1 = 6 , A B = 6 + 1 × 1 = 7 ; then t : 6 → 7 .
+4. Remove event and run routine:
+• Remove A 5 ; because this is an arrival, record ( a 5 , s 5 ) = (7 , 1) .
+• Because B = 1 , append (5 , 7 , 1) to the queue.
+• Because this is the last arrival, schedule no new arrival.
+After: in service: customer 4; waiting [(5 , 7 , 1)] ; ( B, Q, N ) = (1 , 1 , 2) .
+FEL: { (7 , A 5 ) , (8 , D 4 ) } − → { (8 , D 4 ) } .
+Customer records after step 4 (purple = newly recorded):
+Customer i a i s i start b i wait w i compl. d i sys. time v i
+1 0 3 0 0 3 3
+2 1 2 3 2 5 4
+3 2 1 5 3 6 4
+4 5 2 6 1 — —
+5 7 1 — — — —
+
+PAGE 36
+3 M/M/ 1 QUEUE SIMULATION BY HAND 36
+Iteration 9: completion D 4 at t = 8
+Before: t = 7 ; in service: customer 4; waiting [(5 , 7 , 1)] ; ( B, Q, N ) = (1 , 1 , 2) .
+1. Check stopping: 7 < 10 and FEL is nonempty: continue.
+2. Select earliest event: e = D 4 , t e = 8 < 10 ; keep e in the FEL for now.
+3. Accumulate statistics, then advance clock: ∆ t = 8 − 7 = 1 . Using the old
+state, A Q = 6 + 1 × 1 = 7 , A B = 7 + 1 × 1 = 8 ; then t : 7 → 8 .
+4. Remove event and run routine:
+• Remove D 4 ; because this is a completion, record ( d 4 , v 4 ) = (8 , 3) .
+• Because Q = 1 > 0 , remove customer 5 from the queue and start service.
+Record ( b 5 , w 5 ) = (8 , 1) ; keep B = 1 .
+• Schedule D 5 for t = b 5 + s 5 = 8 + 1 = 9 .
+After: in service: customer 5; waiting [ (5 , 7 , 1) , ] ; ( B, Q, N ) = (1 , 0 , 1) .
+FEL: { (8 , D 4 ) } − → { (9 , D 5 ) } .
+Customer records after step 4 (purple = newly recorded):
+Customer i a i s i start b i wait w i compl. d i sys. time v i
+1 0 3 0 0 3 3
+2 1 2 3 2 5 4
+3 2 1 5 3 6 4
+4 5 2 6 1 8 3
+5 7 1 8 1 — —
+
+PAGE 37
+3 M/M/ 1 QUEUE SIMULATION BY HAND 37
+Iteration 10: completion D 5 at t = 9
+Before: t = 8 ; in service: customer 5; waiting [ ] ; ( B, Q, N ) = (1 , 0 , 1) .
+1. Check stopping: 8 < 10 and FEL is nonempty: continue.
+2. Select earliest event: e = D 5 , t e = 9 < 10 ; keep e in the FEL for now.
+3. Accumulate statistics, then advance clock: ∆ t = 9 − 8 = 1 . Using the old
+state, A Q = 7 + 0 × 1 = 7 , A B = 8 + 1 × 1 = 9 ; then t : 8 → 9 .
+4. Remove event and run routine:
+• Remove D 5 ; because this is a completion, record ( d 5 , v 5 ) = (9 , 2) .
+• Because Q = 0 , set B = 0 . No new service starts.
+• Schedule no new event, so the FEL is empty.
+After: in service: none; waiting [ ] ; ( B, Q, N ) = (0 , 0 , 0) .
+FEL: { (9 , D 5 ) } − → ∅ .
+Customer records after step 4 (purple = newly recorded):
+Customer i a i s i start b i wait w i compl. d i sys. time v i
+1 0 3 0 0 3 3
+2 1 2 3 2 5 4
+3 2 1 5 3 6 4
+4 5 2 6 1 8 3
+5 7 1 8 1 9 2
+
+PAGE 38
+3 M/M/ 1 QUEUE SIMULATION BY HAND 38
+Iteration 11: stop when the FEL is empty
+After the last completion D 5 :
+t = 9 , server idle , waiting [ ] , ( B, Q, N ) = (0 , 0 , 0) , FEL = ∅ .
+Step 1: although 9 < 10 , the FEL is empty. Leave the event loop. Steps 2–4 are
+not executed; state, customer records, and areas remain unchanged.
+A Q = 7 customer-min , A B = 9 min .
+But because the simulation horizon is T = 10 , the following fill-up is needed:
+• Q = B = N = 0 throughout [9 , 10) . This idle interval adds 0(10 − 9) = 0 to
+both A Q and A B .
+• Use T = 10 in the time-average denominators: A Q /T and A B /T .
+
+PAGE 39
+3 M/M/ 1 QUEUE SIMULATION BY HAND 39
+Finish and report: turn the records into performance measures
+All five customers completed service within [0 , 10) . The final records are:
+Customer i a i s i start b i wait w i compl. d i sys. time v i
+1 0 3 0 0 3 3
+2 1 2 3 2 5 4
+3 2 1 5 3 6 4
+4 5 2 6 1 8 3
+5 7 1 8 1 9 2
+Statistics record Performance measures
+Customer averages –Mean wait ¯w = (0 + 2 + 3 + 1 + 1) / 5 = 1.4 min .
+–Mean system time ¯v = (3 + 4 + 4 + 3 + 2) / 5 = 3.2 min .
+Time averages –Mean queue length A Q /T = 7 / 10 = 0.7 customers .
+–Utilization A B /T = 9 / 10 = 0.9
+–mean system size ( A Q + A B ) /T = 1.6 customers .
+• The throughput is 5 / 10 = 0.5 customers/min .
+• Little’s law is validated: mean system size = throughput × mean system time
+
+PAGE 40
+4 RANDOM INPUT GENERATION 40
+4 Random Input Generation
+So far, we have assumed that all arrival times and service durations are generated
+in advance .
+It is more eﬀicient to generate inputs on the fly: draw a value from its probability
+distribution when an event routine needs it, then continue the same bookkeeping.
+Inputs prepared in advance Inputs generated during the run
+Store arrival and service arrays for
+all future customers.
+Generate the input values needed by
+current event routines.
+This saves memory for future inputs , especially in long runs.
+We will study when to draw , how to generate uniform random numbers on (0 , 1) ,
+and how to transform them into model inputs .
+
+PAGE 41
+4 RANDOM INPUT GENERATION 41
+When to draw inputs: Inside the event routines
+Keep the single-server queue example. Let X i = a i +1 − a i be an interarrival time
+and S i a customer’s service duration. Assume that X i ∼ F
+a
+( ·) and S i ∼ F
+s
+( ·) .
+When Input generation in event routine
+Initialization Set a 1 = 0 for this example. A model with a random
+first arrival would draw a 1 ∼ F
+a
+( ·) .
+Arrival A i at t Draw S i ∼ F
+s
+( ·) . Start service and insert ( t + S i , D i )
+to the FEL if the server is idle; otherwise store ( i, t, S i )
+in the waiting list.
+After arrival A i Draw X i ∼ F
+a
+( ·) and insert ( t + X i , A i +1 ) to FEL.
+Completion D i If customer j is at the head of the queue, start their
+service and insert ( t + S j , D j ) to FEL using their
+stored S i . Remove customer j from the waiting list.
+
+PAGE 42
+4 RANDOM INPUT GENERATION 42
+How to draw inputs?
+Motivating question: Given a probability distribution with cumulative distribution
+function (CDF) F , how can we generate X ∼ F ( ·) , so that P ( X ≤ x ) = F ( x ) ?
+1. The building block: a uniform random variable U ∼ Uniform[0 , 1] . Given U ,
+generate X = F
+− 1
+( U ) . It can be shown that X ∼ F ( ·) . This is called the
+inverse-transform sampling.
+2. How can a computer generate U ∼ Uniform[0 , 1] ? A fixed algorithm follows
+a deterministic rule. Once its initial state is fixed, every output is determined,
+so it is impossible to generate numbers that are truly random .
+3. A pseudorandom-number generator (PRNG) uses a rule to update its
+internal state and output numbers designed to behave like independent
+uniform draws. A random seed sets its initial state, which leads to a
+reproducible sequence of uniform draws.
+
+PAGE 43
+4 RANDOM INPUT GENERATION 43
+LCG: a special case of a PRNG
+• A linear congruential generator (LCG) is one type of PRNG . It applies a
+deterministic rule:
+Z k +1 = ( aZ k + c ) mod m, U k +1 = Z k +1 /m,
+where Z 0 is the random seed , m is the modulus, a the multiplier, and c the
+increment.
+• Modulo m keeps the remainder in 0 , 1 , . . . , m − 1 .
+• Dividing by m gives the evenly spaced grid 0 , 1 /m, . . . , ( m − 1) /m in [0 , 1) .
+Toy example: m = 16 , a = 5 , c = 3 , Z 0 = 7 .
+Z 1 = 38 mod 16 = 6 , Z 2 = 33 mod 16 = 1 .
+k 1 2 3 4 5 6
+Z k 6 1 8 11 10 5
+U k .375 .0625 .5 .6875 .625 .3125
+
+PAGE 44
+4 RANDOM INPUT GENERATION 44
+LCG: the Hull–Dobell theorem
+How to choose ( m, a, c ) ? Hull–Dobell theorem: For integers m ≥ 2 and
+0 ≤ a, c < m , the LCG Z k +1 = ( aZ k + c ) mod m has full period m for every seed
+Z 0 ∈ { 0 , . . . , m − 1 } if and only if :
+1. c and m are relatively prime: gcd( c, m ) = 1 (greatest common divisor).
+2. Every prime factor of m divides a − 1 .
+3. If 4 divides m , then 4 also divides a − 1 .
+Our example: m = 16 , a = 5 , c = 3 . Here gcd(3 , 16) = 1 , and both 2 (the only
+prime factor of 16) and 4 divide a − 1 = 4 . Hence the period is exactly 16 .
+Consequence of full period m : Every grid value 0 , 1 /m, . . . , ( m − 1) /m appears
+once per full cycle, approximating a uniform distribution. In Nmypy , m = 2
+128
+However, full period does not imply truly randomness. The sequence of U 1 , U 2 , ...
+generated from the LCG is deterministic and not independent by construction .
+
+PAGE 45
+4 RANDOM INPUT GENERATION 45
+Inverse-transform sampling
+With uniform draws available, return to our original question: how can we generate
+X ∼ F ( ·) ? Let F ( x ) = P ( X ≤ x ) be the required CDF.
+1. Draw U ∼ U (0 , 1) .
+2. Set X = F
+− 1
+( U ) , or equivalently, solving U = F ( X ) .
+• For a continuous, strictly increasing CDF,
+P ( X ≤ x ) = P
+(
+F
+− 1
+( U ) ≤ x
+)
+= P
+(
+U ≤ F ( x )
+)
+= F ( x ) .
+Thus the generated X has the desired distribution .
+• More generally, use F
+− 1
+( u ) = inf { x : F ( x ) ≥ u } , for 0 < u < 1 .
+Example of exponential distribution: For an exponential distribution with rate
+r > 0 , F ( x ) = 1 − e
+− rx
+for x ≥ 0 . Solving U = F ( X ) = 1 − e
+− rX
+gives
+X = −
+log(1 − U )
+r
+.
+
+PAGE 46
+4 RANDOM INPUT GENERATION 46
+Acceptance–rejection sampling
+• When the inversion F
+− 1
+( U ) is hard to compute, we can use a easy-to-sample
+probability distribution G to generate candidates for the desired distribution.
+• Let f be the density function of F ( ·) , i.e., F ( x ) =
+∫
+x
+−∞
+f ( t ) dt , and let g be
+the density function of G ( ·)
+• Suppose there exists a constant M > 0 such that f ( x ) ≤ M g ( x ) for all x .
+1. Draw a candidate X ∼ g and an independent U ∼ U (0 , 1) .
+2. Accept X if U ≤ f ( X ) / ( M g ( X )) .
+3. Otherwise reject the candidate and try again with fresh draws of U .
+The random variables generated this way follows the desired distribution F ( ·) :
+Proof. Let A denote acceptance. Then P ( A | X = t ) = f ( t ) / ( M g ( t )) .
+P ( X ≤ x, A ) =
+∫
+x
+−∞
+P ( A | X = t ) g ( t ) dt =
+∫
+x
+−∞
+f ( t )
+M g ( t )
+g ( t ) dt =
+F ( x )
+M
+,
+P ( A ) = lim
+x →∞
+P ( X ≤ x, A ) =
+1
+M
+,
+P ( X ≤ x | A ) =
+P ( X ≤ x,A )
+P ( A )
+=
+F ( x ) /M
+1 /M
+= F ( x ) .
+
+PAGE 47
+4 RANDOM INPUT GENERATION 47
+Week 3 summary
+• Simulation automates bookkeeping. One run traces a sample path from
+given inputs. Independent runs estimate average performance and variability.
+• DES advances from event to event. The future-event list identifies what
+happens next, and the clock jumps directly to that event’s time.
+• State describes the system now, while statistics track performance.
+Customer records give customer averages. Queue area and busy time divided
+by T give average queue length and utilization.
+• Hand simulation follows the same event loop. Initialize, select the earliest
+event, accumulate statistics using the old state, advance the clock, and
+execute its routine. Stop under the specified ending condition.
+• Random inputs can be generated on the fly. Event routines draw interarrival
+times and service durations from specified distributions, saving memory for
+future inputs.
+• Uniform draws are the building block for random inputs. Seeded PRNGs
+such as LCGs give reproducible sequences. Inverse-transform and
+acceptance–rejection sampling generate inputs with the required distribution.
+
+PAGE 48
+4 RANDOM INPUT GENERATION 48
+Python preparation for Week 4
+For the Python implementation of discrete-event simulation in Week 4, review
+Learn Python in Y minutes (https://learnxinyminutes.com/python/).

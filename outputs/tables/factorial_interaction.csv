@@ -1,0 +1,4 @@
+comparison,effect,metric,n,mean,sd,se,lo,hi
+3-2,paired difference-in-differences (unhalved interaction contrast),p90_doc_wait,50,-96.02,14.7826120969,2.09057705148,-100.221171874,-91.818828126
+4-2,paired difference-in-differences (unhalved interaction contrast),p90_doc_wait,50,-121.5692,7.9760943437,1.12799007956,-123.835980932,-119.302419068
+4-3,paired difference-in-differences (unhalved interaction contrast),p90_doc_wait,50,-25.5492,9.58576215445,1.35563148445,-28.2734434618,-22.8249565382

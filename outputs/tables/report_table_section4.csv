@@ -1,0 +1,4 @@
+Input model,Mean peak count,Mean last arrival (min),Gap SD (min)
+Source baseline,55.48,"1,030.32",1.30
+Empirical,55.14,"1,032.10",1.30
+Poisson,53.94,"1,031.79",5.14

@@ -1,0 +1,13 @@
+experiment,condition,doctors,pharmacy_counters,target,n,run_attainment,service_level,sl_lo,sl_hi,pooled_p90_context
+confirmation,base,2,1,10,50,0,0.326,0.315550051031,0.336449948969,361
+confirmation,base,2,1,15,50,0,0.3546,0.344544580486,0.364655419514,361
+confirmation,base,2,1,20,50,0,0.362,0.35148714633,0.37251285367,361
+confirmation,base,2,1,30,50,0,0.369,0.358681002973,0.379318997027,361
+confirmation,base,3,1,10,50,0.64,0.9209,0.901724092481,0.940075907519,8
+confirmation,base,3,1,15,50,0.78,0.9474,0.931000495044,0.963799504956,8
+confirmation,base,3,1,20,50,0.94,0.9675,0.954243609402,0.980756390598,8
+confirmation,base,3,1,30,50,0.98,0.9892,0.982218765872,0.996181234128,8
+confirmation,base,4,1,10,50,1,1,1,1,0
+confirmation,base,4,1,15,50,1,1,1,1,0
+confirmation,base,4,1,20,50,1,1,1,1,0
+confirmation,base,4,1,30,50,1,1,1,1,0

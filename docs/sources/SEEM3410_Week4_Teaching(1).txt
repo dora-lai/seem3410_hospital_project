@@ -1,0 +1,992 @@
+
+PAGE 1
+1
+SEEM3410 System Modeling and
+Simulation
+Week 4:
+Discrete-Event Simulation: Python
+Implementation and Output Analysis
+W eiliang Liu
+Department of SEEM
+The Chinese University of Hong Kong
+2026–27 T erm 1
+
+PAGE 2
+WEEK 4 ROADMAP 2
+Week 4 Roadmap
+1 M/M/ 1 Queue Simulation in Python
+2 Steady-State Detection
+3 Confidence Interval Construction
+4 Variance Reduction and Rare-Event Simulation
+
+PAGE 3
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 3
+1 M/M/ 1 Queue Simulation in Python
+Recap: Discrete-event simulation (DES) logic (Week 3, slide 25)
+Initialize once
+• Set the clock , initial state , statistics , and ending condition .
+• Put the initial events into the future-event list (FEL) .
+Repeat the event loop
+1. Check the ending condition; select the earliest event from the FEL .
+2. Accumulate statistics over the elapsed interval using the old state .
+3. Advance the clock to the event time.
+4. Remove the event and run its event routine : update state, customer records,
+and the FEL; draw inputs as needed.
+Finish: Compute performance measures from the statistics.
+
+PAGE 4
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 4
+Python for one simulation run: imports and settings
+Teaching code: mm1_single_run.py
+1 from collections import deque
+2 from heapq import heappop, heappush
+3 from itertools import count
+4 from numpy.random import SeedSequence, default_rng
+6 lam = 0.8
+7 mu = 1.0
+8 T = 300.0
+9 t0 = 0.0
+10 seed = 3410
+11 collect = True
+1–4 Import the double-ended queue, heap, counter, and RNG tools.
+6–7 Set arrival and service rates, measured per minute.
+8–9 End at T = 300 minutes. This introductory version fixes t 0 = 0 , so it
+has no warm-up.
+10 Fix the random seed so this run can be reproduced.
+11 Retain customer records, intervals of unchanged state, and the event
+trace.
+
+PAGE 5
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 5
+Initialize random-number generators for this run
+Set up the random seeds and generators once, then draw inputs as needed
+13 arrival_seed , service_seed = SeedSequence(seed).spawn(2)
+14 arrival_rng = default_rng( arrival_seed )
+15 service_rng = default_rng( service_seed )
+13 Use the chosen random seed to create two child seeds , one for
+interarrival durations and the other for service.
+14 Initialize the generator for interarrival durations .
+15 Initialize a separate generator for service durations .
+Initialize once per run , so that restarting with the same seed reproduces the same
+simulation run. For independent replications , use different seeds for different runs.
+For our M/M/ 1 inputs,
+X ∼ Exp( λ ) and S ∼ Exp( µ ) .
+Use arrival_rng.exponential(1 / lam) and service_rng.exponential(1 /
+mu) . These functions take mean as input, not rate.
+
+PAGE 6
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 6
+Initialize the clock, state, FEL, and statistics
+17 clock = 0.0
+18 waiting = deque()
+19 server = None
+20 fel = []
+21 event_ids = count()
+22 arrival_time = arrival_rng.exponential(1 / lam)
+23 heappush ( fel , (arrival_time, 1, next ( event_ids ), " arrival " , 1))
+24 area_Q = area_B = 0.0
+25 arrivals = departures = 0
+26 intervals, trace, records = [], [], []
+17–19 Set clock 0, an empty waiting queue, and an idle server.
+20–23 Create the FEL and event counter; insert the first arrival event; see more
+about heappush next slide
+24–26 Initialize statistics and customer counts; create the record lists.
+
+PAGE 7
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 7
+FEL as a priority queue implemented with Python’s heapq
+Line 23: insert the first arrival event
+23 heappush ( fel , ( arrival_time , 1, next ( event_ids ), " arrival " , 1))
+General form
+event = (time, priority, sequence, event_type, customer_id)
+heappush ( fel , event )
+Time Event time. event = heappop(fel) removes and returns the earlierst
+event. By contrast, event = fel[0] only returns the earliest event .
+Priority At equal times, completion (0) precedes arrival (1).
+Seq. next(event_ids) gives event counts 0, 1, 2, … and breaks remaining
+ties by insertion order when both event time and priority are equal.
+Type Event type that identifies the event routine to execute.
+ID Customer ID, e.g., 1, 2 …
+
+PAGE 8
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 8
+Main code: the DES event loop
+Abridged: event routine bodies and the trace after each event are omitted
+28 while clock < T:
+29 event_time = fel [0][0] if fel else T
+30 until = min (event_time, T)
+32 q = len (waiting)
+33 b = int (server is not None)
+34 dt = until - clock
+35 area_Q += q * dt # use the state before the event
+36 area_B += b * dt
+37 if collect and until > clock :
+38 intervals .append(( clock , until, q, b))
+39 clock = until
+40 if event_time >= T:
+41 break # do not process events at T
+43 _, _, _, event_type , customer_id = heappop ( fel )
+44 if event_type == " arrival " :
+# Execute arrival routine , lines 45--64
+65 elif event_type == " departure " :
+# Execute completion routine , lines 66--77
+
+PAGE 9
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 9
+The event loop: select the next event
+Ending condition and future-event list
+28 while clock < T :
+29 event_time = fel [0][0] if fel else T
+30 until = min ( event_time , T )
+28 Repeat while the simulation horizon T has not been reached.
+29 fel[0] is the earliest event tuple; its first field fel[0][0] is the event
+time t e . If the FEL is empty, use T to finish the final interval.
+30 The next event time, with truncation at T , is min( t e , T ) .
+The event has been selected , but remains in the FEL.
+
+PAGE 10
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 10
+Statistics: accumulate before changing the state
+State and time-average statistics
+32 q = len (waiting)
+33 b = int (server is not None)
+34 dt = until - clock
+35 area_Q += q * dt
+36 area_B += b * dt
+32 Read the old queue length q .
+33 Set b = 1 if busy, or 0 if idle.
+34 Measure the elapsed time ∆ t between sucessive events.
+35–36 Accumulate Q ∆ t and B ∆ t using that old state .
+
+PAGE 11
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 11
+Advance the clock and remove the selected event
+Clock, ending condition, and FEL removal
+37 if collect and until > clock :
+38 intervals .append(( clock , until, q, b))
+39 clock = until
+40 if event_time >= T :
+41 break
+43 _, _, _, event_type , customer_id = heappop ( fel )
+37–38 Save state intervals if requested.
+39 Advance the clock to the earliest event.
+40–41 Stop before executing an event at or beyond T .
+43 Remove the selected event. Read its type and customer ID. The _ are
+placeholders because we don’t use those entries.
+If the next event is beyond T , accumulate only up to T and leave it unprocessed.
+Otherwise, its type determines which event routine runs next.
+
+PAGE 12
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 12
+Arrival routine: create the customer’s record
+If the event type is “arrival”, execute the following arrival routinue .
+44 if event_type == " arrival " :
+45 arrivals += 1
+46 service = service_rng .exponential(1 / mu)
+47 customer = ( customer_id , clock, service )
+48 if collect:
+49 records .append( dict ( id = customer_id ,
+50 arrival=clock, service = service ,
+51 start=None, departure=None))
+44–45 Execute this routine for an arrival event, and increase the arrival count.
+46–47 Draw one service duration s i and form ( i, a i , s i ) , where i is customer ID
+from the event record, a i is the arrival time that coincides with the
+current clock time.
+48–51 If requested, record a i , s i . Unknown service start time b i and departure
+time d i are None .
+
+PAGE 13
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 13
+Arrival routine: start service or join the queue
+Next, decide whether this arriving customer starts service or joins the queue.
+52 if server is None:
+53 server = customer
+54 i, arrival, service = customer
+55 heappush ( fel , (clock + service, 0, next ( event_ids ),
+56 " departure " , i))
+57 if collect:
+58 records [i - 1][ " start " ] = clock
+59 else :
+60 waiting .append(customer)
+52–54 If server idle, assign the customer to the server and unpack ( i, a i , s i ) .
+55–56 Insert a completion event at clock + service , with priority 0 and this
+customer’s ID.
+57–58 Record service-start time b i .
+59–60 If server busy, append the customer to the waiting queue.
+
+PAGE 14
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 14
+Arrival routine: schedule the next arrival
+61 arrival_time = clock + arrival_rng .exponential(1 / lam)
+62 heappush ( fel , ( arrival_time , 1, next ( event_ids ),
+63 " arrival " , arrivals + 1))
+61 Draw the next interarrival duration and add it to the current clock.
+62–63 Insert the next arrival , with priority 1 and the next customer’s ID.
+
+PAGE 15
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 15
+Completion routine: release the server
+If the event type is “depature”, execute the following completion routinue .
+65 elif event_type == " departure " :
+66 departures += 1
+67 if collect:
+68 records [ customer_id - 1][ " departure " ] = clock
+69 server = None
+65–66 Execute this branch for a service completion and increase the count for
+customer departures.
+67–68 Record completion time d i for the customer.
+69 Make the server idle.
+
+PAGE 16
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 16
+Completion routine: start the next waiting customer
+The completed customer has left. Now check whether a waiting customer can start
+service at the same clock time.
+70 if waiting :
+71 customer = waiting .popleft()
+72 server = customer
+73 i, arrival, service = customer
+74 heappush ( fel , (clock + service, 0, next ( event_ids ),
+75 " departure " , i))
+76 if collect:
+77 records [i - 1][ " start " ] = clock
+70–71 If someone is waiting, remove the first customer using popleft() .
+72–73 Assign that customer to the server and read their stored attributes.
+74–75 Insert their completion event to the FEL.
+76–77 Record service-start time b i .
+With no one waiting, the server stays idle and no new completion is scheduled.
+
+PAGE 17
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 17
+After the routine: record the updated state and FEL
+Event trace for inspecting the simulation
+79 if collect:
+80 trace .append({ " time " : clock , " event " : event_type ,
+81 " id " : customer_id, " Q " : len ( waiting ),
+82 " B " : int ( server is not None), " fel " : sorted ( fel )})
+79–80 If requested, begin a dictionary record for the event just processed.
+81–82 Store the customer ID, updated Q, B , and a sorted FEL snapshot.
+sorted(fel) is the stored value of the FEL for easy inspection. It does not alter
+the actual FEL.
+
+PAGE 18
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 18
+After the loop: compute and print performance
+The standalone script ends with its results
+84 out = dict ( Lq = area_Q / T, utilization = area_B / T,
+85 area_Q = area_Q , area_B = area_B , T=T, t0=t0,
+86 arrivals=arrivals, departures=departures,
+87 unfinished= len (waiting) + int (server is not None))
+88 if collect:
+89 out .update(intervals=intervals, trace=trace, records=records)
+90 print (f " Average queue length : { out [' Lq ']:.6 f } " )
+91 print (f " Server utilization : { out [' utilization ']:.6 f } " )
+84 Divide areas by the observation length T .
+85–87 The ouput includes areas, settings, counts, and unfinished customers
+N = Q + B .
+88–89 Attach the optional intervals, trace, and customer records.
+90–91 Print average queue length and server utilization.
+Run python mm1_single_run.py : ˆL q = 2 . 592378 and ˆU = 0 . 804195 for seed
+3410.
+
+PAGE 19
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 19
+Optional component: Printing customer records
+The records store arrival time a i , service duration s i , start time b i , and
+completion time d i . The following code derives wait w i and system time v i :
+1 for row in out[ " records " ]:
+2 a, b, d = row[ " arrival " ], row[ " start " ], row[ " departure " ]
+3 wait = None if b is None else b - a
+4 system_time = None if d is None else d - a
+5 print (row[ " id " ], wait , system_time )
+1–2 Read each customer’s observed arrival, start, and completion times.
+3 If service has started, compute w i = b i − a i .
+4 If service has completed, compute v i = d i − a i .
+5 Print the available customer outcomes.
+
+PAGE 20
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 20
+Optional component: Checking event logic
+Optional checks after each event routine:
+1 assert not waiting or server is not None
+2 assert arrivals - departures == len (waiting) + int (server is not
+None)
+3 assert all (event[0] >= clock for event in fel )
+4 completions = [e for e in fel if e[3] == " departure " ]
+5 assert len (completions) == int (server is not None)
+6 assert 0 <= area_B <= clock
+1–2 Waiting can only occur when the server is busy; flow conservation gives
+N = Q + B .
+3 Every pending event is at or after the clock.
+4–5 One completion is pending exactly when the single server is busy.
+6 Accumulated busy time cannot exceed elapsed time.
+
+PAGE 21
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 21
+Wrap the simulation code as a reusable function
+The earlier script becomes one simulate_mm1 function
+Teaching code: simulate_mm1 (lines 37–138) in des_queue.py
+37 def simulate_mm1 ( lam , mu , T , *, t0 =0.0, seed =3410, collect =False):
+38 """ Run one initially empty M / M /1 queue by explicit discrete - event logic . """
+39 # Lines 39--129: main simulation code described in detail previously
+132 result = dict ( Lq =area_Q / ( T - t0 ), utilization =area_B / ( T - t0 ),
+133 area_Q=area_Q, area_B=area_B, T = T , t0 = t0 ,
+134 arrivals=arrivals, departures=departures,
+135 unfinished= len (waiting) + int (server is not None))
+136 if collect :
+137 result .update(intervals=intervals, trace=trace, records=records)
+138 return result
+Line 37: function arguments
+Required lam : arrival rate; mu : service rate; T :
+simulation horizon.
+* A separator. Parameters after it must be
+named, for example t0=50 .
+Optional t0=0.0 : start recording statistics from t 0 ;
+seed=3410 : random seed; collect=False :
+return summaries without retaining detailed
+records.
+Lines 38–138: function body
+38 Document one initially
+empty M/M/1 run.
+39–129 Execute input generation,
+initialization, FEL loop,
+event routines, and statistics.
+132–135 Assemble performance
+measures and counts.
+136–137 Attach detailed records if
+requested.
+138 Return the result.
+
+PAGE 22
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 22
+Call the simulator repeatedly with independent seeds
+Each function call is one independent replication
+To quantify simulation uncertainty, repeat the run with independently generated inputs:
+1 from numpy.random import SeedSequence
+2 from des_queue import simulate_mm1
+3 R = 30
+4 run_seeds = SeedSequence (3410).spawn( R )
+5 estimates = []
+6 for run_seed in run_seeds :
+7 out = simulate_mm1 (lam=0.8, mu=1.0, T=300,
+8 t0=0, seed= run_seed , collect=False)
+9 estimates .append(out[ " Lq " ])
+1–2 Import the seed tool and the one-run simulation function.
+3–4 Create R child seeds from one reproducible root seed.
+5 Prepare to store one performance estimate per replication.
+6–9 Call one fresh run per child seed and retain its ˆL q .
+Do not reuse the same seed in every call : that would replay the same run.
+
+PAGE 23
+1 M/M/ 1 QUEUE SIMULATION IN PYTHON 23
+Is increasing the number of replications R enough?
+If the target is estimating steady-state performance, then NO.
+• Every replication restarts the system empty , which suffers from an
+initialization (transient) bias relative to steady state.
+• While increasing R estimates the performance of the empty-start system more
+accurately, it does not remove this transient bias.
+• To address this, we use warm-up deletion : simulate the system from t = 0 ,
+but estimate its performance using only data collected over [ t 0 , T ) , where
+0 < t 0 < T .
+• The initial [0 , t 0 ) serves as the warm-up period : the system evolves as usual,
+but data from this period are excluded from the performance estimates.
+When is warm-up not needed? If the real system starts empty each day and the
+target is that finite day’s performance , then there is no transient bias.
+
+PAGE 24
+2 STEADY-STATE DETECTION 24
+2 Steady-State Detection
+• The warm-up-deletion method divides the simulation horizon T into warm-up
+and production windows:
+[0 , t 0 )
+  
+warm-up
+[ t 0 , t 0 + H )
+  
+production window
+, T = t 0 + H.
+• Record the time-average queue length over the production window:
+Y ( t 0 , H ) =
+1
+H
+∫
+t 0 + H
+t 0
+Q ( t ) dt.
+– t 0 controls how much initial output is excluded.
+– H is the amount of simulated time used for estimation.
+Next question: How should we choose a reasonable warm-up time t 0 ?
+
+PAGE 25
+2 STEADY-STATE DETECTION 25
+Choosing t 0 : when do the averages stop changing?
+• A direct way to choose t 0 is to try several values and compare the
+production averages E [ Y ( t 0 , H )] .
+• For our stable M/M/ 1 queue, E [ Q ( t )] → L q . Therefore, with H fixed,
+E [ Y ( t 0 , H )] =
+1
+H
+∫
+t 0 + H
+t 0
+E [ Q ( t )] dt − → L q as t 0 → ∞ .
+• Eventually, further increases in t 0 should have little effect on E [ Y ( t 0 , H )] .
+• For a given t 0 , we estimate E [ Y ( t 0 , H )] by averaging over R independent
+simulation replications.
+• While increasing t 0 addresses initialization bias, increasing the production
+length H or R improves the estimation accuracy of E [ Y ( t 0 , H )] .
+Look for warm-up period t 0 such that E [ Y ( t 0 , H )] becomes insensitive to
+its further increase, which balances simulation cost and initialization bias.
+
+PAGE 26
+2 STEADY-STATE DETECTION 26
+Compare production averages at different warm-up period t 0
+Use pilot simulation runs to choose t 0 before the main experiment.
+1. Choose several values for t 0 , for example t 0 = 0 , 100 , 500 , 1 , 000 , 2 , 000
+minutes. Hold H = 10 , 000 minutes fixed, and each run ends at T = t 0 + H .
+2. For each t 0 , run R = 30 independent replications. Each yields Y r ( t 0 , H ) as
+defined in Slide 24, where r = 1 , 2 , . . . , R . Estimate the production average by
+Y R ( t 0 , H ) =
+1
+R
+R
+∑
+r =1
+Y r ( t 0 , H ) .
+3. Plot the average against t 0 , with confidence intervals (Section 3). Seek
+changes smaller than a practically meaningful amount.
+4. Decide whether to increase t 0 . If averages keep shifting, try larger t 0 . If the
+comparison is too noisy, use more replications (i.e., a larger R ) or a longer H .
+
+PAGE 27
+2 STEADY-STATE DETECTION 27
+Read the comparison and select a warm-up period t 0
+Compare the same M/M/ 1 queue with λ = 0 . 8 and µ = 1 at different t 0 :
+0 100 500 1000 2000
+Warm-up duration (minutes)
+3.0
+3.1
+3.2
+3.3
+3.4
+3.5Estimated Lq with approximate 95% CI
+Independent groups; 30 runs each; production = 10,000 min
+Steady-state 3.2
+• There is no clear systematic trend; simulation noise remains.
+• Provisional choice: t 0 = 1 , 000 minutes.
+• For a tighter assessment, increase R or H before fixing the main experiment.
+• The dashed line is the ground truth for illustration purpose only; it is generally
+unknown when selecting t 0 for more complex systems.
+• Systems with higher utilization typically require a longer warm-up period,
+because they take longer to reach their steady state.
+
+PAGE 28
+2 STEADY-STATE DETECTION 28
+Add warm-up to the simulation code
+Teaching code: mm1_warmup_run.py
+This runnable copy of mm1_single_run.py discussed in Section 1 changes only the
+codes below.
+8 T = 11000.0 # warm - up + production ( minutes )
+9 t0 = 1000.0 # warm - up ( minutes )
+30 until = min (event_time, T )
+34 dt = max (0.0, until - max (clock, t0 ))
+35 area_Q += q * dt # use the state before the event
+36 area_B += b * dt
+84 out = dict (Lq= area_Q / ( T - t0 ), utilization= area_B / ( T - t0 ),
+8–9 Set T = t 0 + H = 11 , 000 and t 0 = 1 , 000 minutes.
+34 Replace dt = until - clock : count only the part after t 0 .
+84 Divide both areas by T − t 0 = H , the actual production time.
+Continue simulating from clock = 0.
+
+PAGE 29
+2 STEADY-STATE DETECTION 29
+Why code line 34 works?
+34 dt = max (0.0, until - max (clock, t0 ))
+For example, take t 0 = 1 , 000 minutes:
+Event interval: [clock,until) Part used for statistics dt
+[998 , 999) None 0
+[999 , 1002) [1000 , 1002) 2
+[1002 , 1005) Entire interval 3
+If Q = 2 and B = 1 on [999 , 1002) , add 2 × 2 = 4 customer-minutes to A Q and
+1 × 2 = 2 busy minutes to A B .
+• Before t 0 , process events as usual, but add zero to the areas.
+• Similarly, customer-average statistics only use customers arriving after
+warm-up t 0 .
+
+PAGE 30
+2 STEADY-STATE DETECTION 30
+Fix the warm-up period, then run independent replications
+Teaching code: mm1_warmup_replications.py
+The existing simulate_mm1 already handles warm-up: pass t0 and set T=t0+H .
+1 from numpy.random import SeedSequence
+2 from des_queue import simulate_mm1
+4 t0 = 1000.0
+5 H = 10000.0
+6 R = 30
+7 seeds = SeedSequence(3410).spawn(R)
+8 estimates = []
+9 for child in seeds :
+10 out = simulate_mm1(lam=0.8, mu=1.0, T = t0 + H ,
+11 t0 = t0 , seed =child)
+12 estimates .append(out[ " Lq " ])
+• Each call returns a production average Y r after its own warm-up.
+
+PAGE 31
+3 CONFIDENCE INTER V AL CONSTRUCTION 31
+3 Confidence Interval Construction
+Independent replications: one estimate per run
+Each simulation replication r = 1 , . . . , R yields a performance estimate
+Y r ( t 0 , H ) =
+1
+H
+∫
+t 0 + H
+t 0
+Q r ( t ) dt.
+Averaging these R values yields the estimate for the production average:
+Y R ( t 0 , H ) =
+1
+R
+R
+∑
+r =1
+Y r ( t 0 , H ) .
+How do we quantify the estimation uncertainty of the Y R ( t 0 , H ) ?
+
+PAGE 32
+3 CONFIDENCE INTER V AL CONSTRUCTION 32
+Confidence interval for the actual production average
+• Fix t 0 and H . Write Y r = Y r ( t 0 , H ) and Y R = Y R ( t 0 , H ) for simplicity.
+• For independent replications, { Y r : r = 1 , . . . , R } are independent and
+identically distributed (iid) .
+• Define θ = E [ Y r ] and σ
+2
+= Var( Y r ) . It follows that
+E [ Y R ] = θ, Var( Y R ) =
+σ
+2
+R
+, SE( Y R ) =
+σ
+√
+R
+.
+• The standard error (SE) is the standard deviation of the estimate Y R across
+repeated experiments of R replications.
+• If the SE is known, we can construct an uncertainty interval that contains
+the actual production-average θ with high probability .
+• The statistical theory underlying this construction is the central limit theorem .
+
+PAGE 33
+3 CONFIDENCE INTER V AL CONSTRUCTION 33
+Normal approximation: the central limit theorem
+For iid Y 1 , . . . , Y R with mean θ and finite variance σ
+2
+> 0 , the central limit
+theorem (CLT) states that, as R → ∞ ,
+Y R − θ
+σ/
+√
+R
+d
+− − → N (0 , 1) .
+Hence, for large R ,
+Y R ˙∼ N
+(
+θ,
+σ
+2
+R
+)
+.
+• Imagine repeating the entire experiment of R runs . The resulting values of
+Y R have an approximately normal distribution.
+• Note that individual Y r values need not be normal.
+
+PAGE 34
+3 CONFIDENCE INTER V AL CONSTRUCTION 34
+Normal approximation: a 95% uncertainty interval
+For Z ∼ N (0 , 1) , Pr( − 1 . 96 ≤ Z ≤ 1 . 96) ≈ 0 . 95 .
+−1.96 0 1.96
+Standardized estimation error, Z
+95%
+2.5% 2.5%
+Apply this to the standardized production-average estimate Y R :
+Pr
+(
+− 1 . 96 ≤
+Y R − θ
+σ/
+√
+R
+≤ 1 . 96
+)
+≈ 0 . 95 .
+Rearranging gives an approximate 95% confidence interval for θ :
+Y R ± 1 . 96
+σ
+√
+R
+.
+However, the SE
+σ
+√
+R
+is unknown.
+
+PAGE 35
+3 CONFIDENCE INTER V AL CONSTRUCTION 35
+Estimating the standard error
+Use the sample variance among the R run averages to estimate σ
+2
+:
+s
+2
+Y
+=
+1
+R − 1
+R
+∑
+r =1
+( Y r − Y R )
+2
+,
+which yields the following estimate of the SE:
+ˆSE( Y R ) =
+s Y
+√
+R
+.
+Therefore, a computatable confidence interval for θ is
+Y R ± 1 . 96
+s Y
+√
+R
+.
+• Imagine repeating the entire experiment of R runs and re-computing this
+interval for many times .
+• Approximately 95% of these intervals will contain the actual
+production-average θ .
+• Increasing the replication number R shrinks the confidence-interval length .
+
+PAGE 36
+3 CONFIDENCE INTER V AL CONSTRUCTION 36
+Package the replication experiment as a function
+def replications(R=30, lam=.8, mu=1.0, warmup=1000, production=10000,
+seed=3410):
+""" One independent production time average per run . """
+children = _copy_seed(seed).spawn(R)
+estimates = []
+for child in children:
+run = simulate_mm1(lam, mu, warmup + production,
+t0=warmup, seed=child)
+estimates.append(run[ " Lq " ])
+return dict (settings= dict (R=R, lam=lam, mu=mu, warmup=warmup,
+production=production, seed=seed),
+estimates=estimates, ci=confidence_interval(estimates
+))
+The wrapper repeats simulate_mm1 with independent seeds and returns the
+estimates and their confidence interval.
+
+PAGE 37
+3 CONFIDENCE INTER V AL CONSTRUCTION 37
+The replication experiment
+5 10 15 20 25 30
+Independent replication
+2.5
+3.0
+3.5
+4.0
+4.5Production time-average Q
+Replication estimates: warm-up 1,000; production 10,000 min
+One estimate per run
+95% CI for the mean
+Mean of 30 runs
+Steady-state 3.2
+• Each point is one Y r from H = 10 , 000 minutes after a warm-up t 0 = 1 , 000
+minutes.
+• The confidence interval quantifies uncertainty in the mean of all 30 runs.
+
+PAGE 38
+4 V ARIANCE REDUCTION AND RARE-EVENT SIMULATION 38
+4 Variance Reduction and Rare-Event
+Simulation
+As in Section 3, Y r is one replication’s output and θ = E [ Y r ] . Recall the
+approximate 95% confidence interval for θ :
+Y R ± 1 . 96
+s Y
+√
+R
+.
+For greater presicion, i.e., a smaller width of the confidence interval:
+• Increase R : more replications narrow the interval, but require more computer
+running time for simulation.
+• Reduce s Y : a smaller sample standard deviation also narrows the interval.
+Can we improve precision by reducing the variability of the individual
+outputs Y 1 , . . . , Y R , while estimating the same mean θ ?
+Variance reduction seeks to construct an adjusted simulatin output ˜Y r that
+satisfies E [ ˜Y r ] = θ and Var[ ˜Y r ] ≤ Var[ Y r ]
+
+PAGE 39
+4 V ARIANCE REDUCTION AND RARE-EVENT SIMULATION 39
+M/M/ 1 example: customer waiting time
+Consider an initially empty M/M/ 1 queue, where the number of customers is fixed
+at n ≥ 2 . We want to estimate the average wait of customers via simulation.
+Conventional approach in Section 3: R independent simulation replications
+1. In run r , simulate the first n customers through service completion.
+2. Record w r,i : the time customer i waits before starting service in run r .
+Return one output, the customer-average wait:
+Y r =
+1
+n
+n
+∑
+i =1
+w r,i , θ = E [ Y r ] .
+3. Estimate θ using Y R = R
+− 1
+∑
+R
+r =1
+Y r and constrcut the confidence interval
+Y R ± 1 . 96 s Y /
+√
+R .
+In the following, we discuss three variance-reduction methods :
+• Antithetic variates
+• Control variates
+• Importance sampling
+
+PAGE 40
+4 V ARIANCE REDUCTION AND RARE-EVENT SIMULATION 40
+Antithetic variates: pair simulation runs
+• Divide R runs into R/ 2 pairs , say run 2 j − 1 and 2 j , for j = 1 , . . . , 2 R .
+• For each customer i = 1 , . . . , n ,
+– generate their interarrival time using iid uniforms U
+a
+i
+in one run and
+1 − U
+a
+i
+in its partner ;
+– generate their service duration using iid uniforms U
+s
+i
+in one run and
+1 − U
+a
+i
+in its partner .
+• This creates negative correlation between the arrival/service inputs for run
+2 j − 1 and run 2 j . Hence, we expect negative correlation between the
+outputs Y 2 j − 1 and Y 2 j , i.e., c = Cov( Y 2 j − 1 , Y 2 j ) < 0 .
+• Consider the paired average
+˜Y j =
+Y 2 j − 1 + Y 2 j
+2
+, j = 1 , . . . , R/ 2 .
+We have E [ ˜Y j ] = θ and Var( ˜Y j ) = ( σ
+2
++ c ) / 2 < Var( Y j ) / 2 if c < 0 .
+• Since ˜Y j , j = 1 , . . . , R/ 2 are independent ( why? ), the confidence interval can
+be constructed as ˜Y R/ 2 ± 1 . 96 s
+˜Y
+/
+√
+R/ 2 .
+• Hence, as long as c < 0 , this confidence interval is expected to be narrower.
+
+PAGE 41
+4 V ARIANCE REDUCTION AND RARE-EVENT SIMULATION 41
+Control variates: adjust each replication’s output
+• For each run r , record both the simulated average wait Y r and the average
+service duration C r = n
+− 1
+∑
+n
+i =1
+S r,i , with known mean E [ C r ] = 1 /µ = 1
+• Since longer services tend to raise Y r , we expect Cov( Y r , C r ) ̸= 0 .
+• For a fixed β , consider the adjusted output :
+˜Y r = Y r − β ( C r − 1 /µ ) ,
+where E [ ˜Y r ] = E [ Y r ] = θ. Expanding the variance gives
+Var( ˜Y r ) = Var( Y r ) + β
+2
+Var( C r ) − 2 β Cov( Y r , C r ) .
+• This quadratic is minimized at β
+∗
+=
+Cov( Y r , C r )
+Var( C r )
+. Substituting gives
+Var( ˜Y r )
+⏐
+⏐
+β = β ∗
+= Var( Y r ) −
+Cov( Y r , C r )
+2
+Var( C r )
+≤ Var( Y r ) .
+– Under β
+∗
+, reduction in variance is strict when Cov( Y r , C r ) ̸= 0 . But a
+poorly chosen β can increase variance.
+– Estimate β
+∗
+in an independent pilot , then fix it for R new runs. Use the
+adjusted simulation outputs to construct the interval ˜Y R ± 1 . 96 s
+˜Y
+/
+√
+R .
+
+PAGE 42
+4 V ARIANCE REDUCTION AND RARE-EVENT SIMULATION 42
+Importance sampling for rare-event simulation
+• Importance sampling is useful for rare-event probabilities.
+• Consider a M/M/ 1 queue with service duration S r, 1 ∼ Exp(1) . Let
+E r = { S r, 1 > 10 } denote the event that the first service exceeds 10 minutes .
+• We are interested in estimating the probability of this event via R simulation
+replications. In each run, the simulation output is
+Y r = 1 {E r } ,
+so Y r is 1 if the event happens and 0 otherwise. The estimate is
+∑
+r
+Y r /R .
+• In R independent runs, the number of events is
+∑
+r
+Y r ∼ Binomial( R, θ ) ,
+where θ = E [ Y r ] = P ( E r ) = e
+− 10
+≈ 4 . 54 × 10
+− 5
+. Therefore, for R = 10 , 000 ,
+P (
+∑
+r
+Y r = 0) = (1 − θ )
+R
+= 63.5% (this is quite likely) .
+• When
+∑
+r
+Y r = 0 , Y R = 0 and s Y = 0 , so mechanically constructing the
+confidence interval gives
+Y R ± 1 . 96
+s Y
+√
+R
+= 0 ± 0 = [0 , 0] .
+This interval falsely suggests perfect precision . We simply have not observed
+the event in these R runs.
+
+PAGE 43
+4 V ARIANCE REDUCTION AND RARE-EVENT SIMULATION 43
+Importance sampling: change inputs and reweight outputs
+• The problem is that with service duration S r, 1 ∼ Exp(1) , the event
+E r = { S r, 1 > 10 } is very rare .
+• Importance sampling draws service duration from a different distribution , say
+˜S r, 1 ∼ G ( ·) , such that the event ˜E r = { ˜S r, 1 > 10 } is more frequent ,
+enabling a more reliable simulation-based estimate of P ( ˜E r ) .
+• However, P ( ˜E r ) generally differs from the target θ = P ( E r ) .
+• We address by importance re-weighting . Let g be the probability density of
+˜S r, 1 and f the original density for S r, 1 . Consider the adjusted output :
+˜Y r = 1
+{ ˜E r }
+f ( ˜S r, 1 )
+g ( ˜S r, 1 )
+.
+Hence, ˜Y r is f ( ˜S r, 1 ) /g ( ˜S r, 1 ) if the event happens and 0 otherwise.
+• The adjusted output has the same target mean :
+E [ ˜Y r ] =
+∫
+s> 10
+f ( s )
+g ( s )
+g ( s ) ds =
+∫
+s> 10
+f ( s ) ds = E [ ˜Y r ] = θ.
+• Properly choose ˜S r, 1 ∼ G ( ·) such that Var[ ˜Y r ] < Var[ Y r ] .
+
+PAGE 44
+4 V ARIANCE REDUCTION AND RARE-EVENT SIMULATION 44
+Importance sampling example: a service longer than 10 minutes
+• Recall that S r, 1 ∼ Exp(1) , so the original density is f ( s ) = e
+− s
+, and we want
+to use simulation to estimate θ = P ( S r, 1 > 10) = e
+− 10
+.
+• Choose G = Exp(0 . 1) for the proposed ˜S r, 1 , so that g ( s ) = 0 . 1 e
+− 0 . 1 s
+.
+• Now P ( ˜E r ) = P ( ˜S r, 1 > 10) = e
+− 1
+≈ 0 . 368 , which is much larger than the
+rare-event probability P ( S r, 1 > 10)
+• For each proposed service draw, return the adjusted output
+˜Y r = 1
+{ ˜E r }
+f ( ˜S r, 1 )
+g ( ˜S r, 1 )
+= 1
+{ ˜S r, 1 > 10 }
+10 e
+− 0 . 9 ˜S r, 1
+,
+As discussed, averaging over ˜Y r gives an unbias estimate for θ .
+• The variance of ˜Y r can be computed as follows:
+Var[ ˜Y r ] = E [ ˜Y
+2
+r ] − ( E [ ˜Y r ])
+2
+=
+∫
+∞
+10
+(10 e
+− 0 . 9 s
+)
+2
+0 . 1 e
+− 0 . 1 s
+ds − θ
+2
+=
+10
+1 . 9
+e
+− 19
+− e
+− 20
+≈ 2 . 74 × 10
+− 8
+.
+• In contrast, as a Bernouli random variable, the variance of the original ouput
+is Var[ Y r ] = θ (1 − θ ) ≈ 4 . 54 × 10
+− 5
+, which is about 1,655 times larger .
+
+PAGE 45
+4 V ARIANCE REDUCTION AND RARE-EVENT SIMULATION 45
+Week 4 summary
+• Python implements the DES event loop. Initialize once, then advance the
+clock and execute the earliest FEL event.
+• Independent runs estimate expected performance. Repeat the simulation
+function with independent random inputs and average its outputs.
+• Warm-up deletion reduces initialization bias. Keep the system running, but
+measure only the production window. Choose warm-up using pilot
+comparisons at fixed production length.
+• Confidence intervals quantify simulation uncertainty. Under a normal
+approximation, 95% confidence interval for the performance to be estimated
+can be constructed as Y R ± 1 . 96 s Y /R .
+• Variance-reduction methods: antithetic variates and control variates.
+Antithetic variates pair runs with negatively correlated outputs. Control
+variates adjust outputs using a variable with known mean.
+• Importance sampling improves rare-event estimation. Draw from a different
+distribution and weight outputs by f /g to retain the original target.

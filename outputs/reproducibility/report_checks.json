@@ -1,0 +1,10 @@
+{
+  "pages": 7,
+  "A4": true,
+  "body_font_pt": 11,
+  "margins_cm": 2.1,
+  "policy_brief_words": 160,
+  "seven_sections": 7,
+  "banned_claim_scan": true,
+  "human_prose_review": "pending"
+}

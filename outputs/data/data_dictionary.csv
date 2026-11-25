@@ -1,0 +1,15 @@
+column,type,role,unit
+RunID,int64,source metadata,identifier/count/category
+PatientID,int64,input,identifier/count/category
+ArrivalTime,int64,input,minutes
+Priority,int64,input,identifier/count/category
+DoctorID,int64,recorded outcome; forbidden as simulator input,identifier/count/category
+DocServiceTime,int64,input,minutes
+MedServiceTime,int64,input,minutes
+DocWaitTime,int64,recorded outcome; forbidden as simulator input,minutes
+MedWaitTime,int64,recorded outcome; forbidden as simulator input,minutes
+TotalTimeInHospital,int64,recorded outcome; forbidden as simulator input,minutes
+IsPeakArrival,int64,source metadata,identifier/count/category
+Scenario,str,source metadata,identifier/count/category
+NumDoctors,int64,source metadata,identifier/count/category
+PeakLimit,int64,source metadata,minutes

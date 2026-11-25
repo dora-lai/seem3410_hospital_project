@@ -1,0 +1,1394 @@
+
+PAGE 1
+1
+SEEM3410 System Modeling and
+Simulation
+Week 2:
+Analytical Queueing Formulas
+Versus
+Simulation Evalution
+W eiliang Liu
+Department of SEEM
+The Chinese University of Hong Kong
+2026–27 T erm 1
+
+PAGE 2
+2
+A ladder of queueing models (with increasing components)
+M/M/ 1 (Week 1) M/M/c M/M/c/c
+M/M/c + M G/G/c (+ G )
+• M/M/c : customers wait for one of c identical servers; exponential interarrival and
+service times (M emoryless properties) — Erlang C .
+• M/M/c/c : no waiting room; arrivals finding all servers busy are blocked — Erlang B .
+• M/M/c + M : customers have exponential patience and may abandon — Erlang A .
+• G/G/c (+ G ) : arrival, service, or patience times follow general distributions ; exact
+queueing formulas usually unavailable.
+Mnemonic: C = Canonical , B = Blocking , and A = Abandonment .
+
+PAGE 3
+3
+Agner Krarup Erlang and the origin of the Erlang formulas
+Agner Krarup Erlang (1878–1929) was a Danish
+mathematician, statistician, and engineer who
+studied telephone traﬀic while working for the
+Copenhagen Telephone Company.
+• His practical question was: How many
+circuits ( 電話線路 ) are needed when calls
+arrive randomly and occupy circuits for
+random lengths of time?
+• He represented random arrivals , random call
+durations , and limited circuits with
+stochastic models.
+Erlang’s lasting contribution is a modeling paradiagm that translates random
+demand and service capacity into steady-state system performances .
+
+PAGE 4
+4
+Why do exponential interarrival/service times create tractability?
+For a random variable X ∼ Exp( r ) and s, t ≥ 0 ,
+Pr( X > s + t | X > s ) =
+Pr( X > s + t )
+Pr( X > s )
+=
+e
+− r ( s + t )
+e − rs
+= e
+− rt
+= Pr( X > t ) .
+• The remaining time has the same exponential distribution , regardless of
+elapsed time.
+• With Poisson arrivals and exponential service, the future evolution of queueing
+models only depends on the current number of customers in system N ( t ) .
+• Therefore, N ( t ) is a continuous-time Markov chain
+a
+.
+• We can derive long-run system performance from its steady-state probabilities
+p n = lim
+t →∞
+Pr { N ( t ) = n } .
+• For a special class of continuous-time Markov chains known as birth–death
+processes , the probabilities p n can be computed in closed form, leading to
+tractable Erlang formulas .
+a
+https://en.wikipedia.org/wiki/Continuous-time_Markov_chain
+
+PAGE 5
+5
+Birth–death process: balance across a boundary
+Birth: n → n + 1 at rate λ n . Death: n → n − 1 at rate µ n .
+n n + 1
+λ n
+µ n +1
+Left: { 0 , . . . , n } Right: { n + 1 , n + 2 , . . . }
+• Only n ↔ n + 1 crosses the boundary. To cross right again, the process must
+first cross back left.
+• Crossing counts differ by at most one , so their long-run rates agree . In steady
+state, this gives local (detailed) balance :
+p n λ n
+  
+left-to-right rate
+= p n +1 µ n +1
+  
+right-to-left rate
+.
+Each rate = fraction of time in that state × transition rate there . Hence
+p n +1 = p n
+λ n
+µ n +1
+, p n = p 0
+n − 1
+∏
+j =0
+λ j
+µ j +1
+.
+Choose p 0 so that
+∑
+n ≥ 0
+p n = 1 , provided the series is finite.
+
+PAGE 6
+WEEK 2 ROADMAP 6
+Week 2 Roadmap
+1 Erlang C Formula: C anonical Multi-Server Queues
+2 Erlang B and Erlang A Formulas: Queues with B locking and A bandonment
+3 Pollaczek–Khinchine formula
+4 Analytical Formulas Versus Simulation
+
+PAGE 7
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 7
+1 Erlang C Formula: C anonical
+Multi-Server Queues
+• Consider a M/M/c queue with c identical servers, exponential service
+times with rate µ per server, and Poisson arrivals with rate λ .
+• Let the number of customers in system be the system state .
+State n Num. of Busy servers Total service rate µ n
+0 ≤ n < c n nµ
+n ≥ c c cµ
+• Thus, mapping to the birth-death process , we have
+λ n = λ, µ n = min( n, c ) µ.
+• Define a =
+λ
+µ
+(offered load) and ρ =
+λ
+cµ
+=
+a
+c
+(server utilization) .
+• The existence of a steady state (i.e., stability of queue) requires ρ < 1 .
+
+PAGE 8
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 8
+Erlange C formula derivation 1: flow balance for state n < c
+For 0 ≤ n < c , µ n = nc , so flow balance gives p n λ = p n +1 ( n + 1) µ.
+Therefore,
+p n +1 = p n
+λ
+( n + 1) µ
+= p n
+a
+n + 1
+, where recall a = λ/µ.
+Iterating from p 0 ,
+p 1 = p 0 a,
+p 2 = p 1
+a
+2
+= p 0
+a
+2
+2!
+,
+.
+.
+.
+p n = p 0
+a
+n
+n !
+, 0 ≤ n ≤ c .
+We will come back to solve for p 0 at the end.
+
+PAGE 9
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 9
+Erlang C formula derivation 2: flow balance for state n ≥ c
+For n ≥ c , every server is busy, so µ n = cµ and flow balance gives
+p n λ = p n +1 cµ.
+Hence,
+p n +1 = p n
+λ
+cµ
+= p n ρ , where recall ρ = λ/ ( cµ ) = a/c.
+Starting from p c = p 0 a
+c
+/c ! (see Slide 8),
+p c + k = p c ρ
+k
+= p 0
+a
+c
+c !
+ρ
+k
+, k ≥ 0 .
+Also, note that the queue length is k whenever N = c + k .
+
+PAGE 10
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 10
+Erlang C formula derivation 3: solve p 0 from the normalization identity
+Use the normalization identity
+∑
+∞
+n =0
+p n = 1 and split the state space at c :
+1 =
+c − 1
+∑
+n =0
+p n +
+∞
+∑
+k =0
+p c + k
+=
+c − 1
+∑
+n =0
+p 0
+a
+n
+n !
++
+∞
+∑
+k =0
+p 0
+a
+c
+c !
+ρ
+k
+.
+Since
+∑
+∞
+k =0
+ρ
+k
+= 1 / (1 − ρ ) ,
+p 0 =
+[
+c − 1
+∑
+n =0
+a
+n
+n !
++
+a
+c
+c !(1 − ρ )
+] − 1
+.
+Once p 0 is known, every steady-state probability p n follows from the
+recursions in blue and red .
+
+PAGE 11
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 11
+From steady-state probabilities to performance measures
+–The probabilities { p n } describe long-run occupancy of the system state N .
+– Performance measures can be obtained from { p n } by conditioning on N and
+applying probability identities , Little’s law , and PASTA (see next slide).
+Steady-state probabilities
+{ p n }
+Performance measures
+C ( c, a ) , L q , L, W q , W
+probability identities
+Little’s law, PASTA
+• For an event A , the law of total probability gives
+Pr( A ) =
+∞
+∑
+n =0
+Pr( A | N = n ) p n .
+• For a state-dependent quantity g ( N ) , the law of total expectation gives
+E [ g ( N )] =
+∞
+∑
+n =0
+g ( n ) p n .
+• Little’s law converts counts (e.g, queue length) into times (e.g., waiting time).
+
+PAGE 12
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 12
+PASTA: Poisson arrivals see time averages
+Let T j be the time of the j th Poisson arrival , and let N ( T
+−
+j
+) be the state immediately
+before it . Under mild technical conditions, PASTA states that
+lim
+m →∞
+# { j ∈ { 1 , . . . , m } : N ( T
+−
+j
+) = n }
+m
+= p n .
+Thus, a typical steady-state Poisson arrival sees state n with time-average probability p n .
+High-level intuition:
+• In a short interval of length d t , the probability of an arrival is λ d t + o (d t ) ,
+independently of the current state .
+• Thus, conditional on the system being in state N = n or N = n
+′
+, intervals of the same
+length are equally likely to contain an arrival.
+• Consequently, the fraction of arrivals that observe state n equals the fraction of time the
+system spends in state n , namely p n .
+PASTA lets us use the time-average probabilities p n to compute arrival-facing
+(customer-facing) performance measures. It generally fails for non-Poisson arrivals.
+Formal proof and precise conditions: R. W. Wolff (1982), “Poisson Arrivals See Time
+Averages,” Operations Research 30(2), 223–231. doi:10.1287/opre.30.2.223 .
+
+PAGE 13
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 13
+Deriving the delay probability C ( c, a ) from { p n }
+Define C ( c, a ) ≡ Pr { an arrival waits } . By PASTA, an arrival sees state n with probability p n .
+—If n < c , then Pr { wait | N = n } = 0
+—If n ≥ c , then then Pr { wait | N = n } = 1 .
+Hence, the law of total probability gives
+C ( c, a ) =
+∞
+∑
+n =0
+Pr { wait | N = n } p n =
+∞
+∑
+k =0
+p c + k .
+Using the known probabilities p c + k = p 0 ( a
+c
+/c !) ρ
+k
+and
+∑
+k ≥ 0
+ρ
+k
+= 1 / (1 − ρ ) ,
+C ( c, a ) = p 0
+a
+c
+c !
+∞
+∑
+k =0
+ρ
+k
+= p 0
+a
+c
+c !(1 − ρ )
+=
+a
+c
+c !(1 − ρ )
+c − 1
+∑
+n =0
+a
+n
+n !
++
+a
+c
+c !(1 − ρ )
+.
+
+PAGE 14
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 14
+Deriving mean queue length L q and waiting time W q from { p n }
+When N = c + k , there are k customers waiting. Thus, by the law of total
+expectation , and that p c + k = p 0 ( a
+c
+/c !) ρ
+k
+= p c ρ
+k
+and
+∑
+∞
+k =0
+kρ
+k
+= ρ/ (1 − ρ )
+2
+:
+L q =
+∞
+∑
+k =0
+kp c + k = p c
+∞
+∑
+k =0
+kρ
+k
+= p c
+ρ
+(1 − ρ ) 2
+.
+From the last slide, the delay probability C ( c, a ) = p 0
+a
+c
+c ! (1 − ρ )
+= p c / (1 − ρ ) , so
+L q = C ( c, a )
+ρ
+1 − ρ
+.
+By Little’s law , L q = λW q :
+W q =
+L q
+λ
+=
+C ( c, a )
+cµ − λ
+.
+Finally, because every customer receives mean service time 1 /µ , the mean time in
+system ( W ) and the mean number of customers in system ( L ) is, respectively,
+W = W q +
+1
+µ
+and L = λW.
+
+PAGE 15
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 15
+Deriving service level SL( t ) from { p n } : condition on N
+• Let ˜W q denote the random waiting time of an arbitrarily chosen customer. Its mean is
+W q = E [ ˜W q ] .
+• For a target time t ≥ 0 , the service level is the probability that a customer begins service
+within t time units:
+SL( t ) ≡ Pr( ˜W q ≤ t ) .
+Let N be the system state immediately before a Poisson arrival. By PASTA ,
+Pr( N = n ) = p n . Hence, the law of total probability gives
+SL( t ) =
+∑ ∞
+n =0
+Pr( ˜W q ≤ t | N = n ) p n .
+There are two types of arrival states:
+• 0 ≤ n < c : at least one server is idle , so Pr( ˜W q ≤ t | N = n ) = 1 ;
+• n = c + k , k ≥ 0 : all servers are busy and k customers are already waiting .
+Hence, the total-probability sum can be split into an “easy” part and a “hard” part:
+SL( t ) =
+c − 1
+∑
+n =0
+Pr( ˜W q ≤ t | N = n ) p n
+  
+∑
+c − 1
+n =0
+p n
++
+∞
+∑
+k =0
+Pr( ˜W q ≤ t | N = c + k ) p c + k
+  
+see next slide
+.
+
+PAGE 16
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 16
+Deriving service level SL( t ) from { p n } : evaluate Pr( ˜W q ≤ t | N = c + k )
+• When N = c + k , k customer wait ahead of the arriving customer. Hence, the
+customer must wait for k + 1 service completions before entering service.
+• Let D ( t ) denote the number of service completions during the first t time
+units after arrival. Then
+˜W q ≤ t ⇐ ⇒ D ( t ) ≥ k + 1 .
+• While this customer waits, all c servers remain busy . For each server ,
+exponential service times generate a Poisson completion process with rate µ .
+Superposing the c independent completion processes gives
+D ( t ) ∼ Poisson( cµt ) .
+• For X ∼ Poisson( θ ) , Pr( X ≤ k ) = e
+− θ
+∑
+k
+j =0
+θ
+j
+/j ! . Therefore,
+Pr( ˜W q ≤ t | N = c + k ) = Pr( D ( t ) ≥ k + 1)
+= 1 − Pr( D ( t ) ≤ k )
+= 1 − e
+− cµt
+k
+∑
+j =0
+( cµt )
+j
+j !
+.
+
+PAGE 17
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 17
+Deriving service level SL( t ) from { p n } : combine states
+Combine Slides 15 and 16, and use
+∑
+c − 1
+n =0
+p n +
+∑
+∞
+k =0
+p c + k = 1 :
+SL( t ) =
+c − 1
+∑
+n =0
+p n +
+∞
+∑
+k =0
+[
+1 − e
+− cµt
+k
+∑
+j =0
+( cµt )
+j
+j !
+]
+p c + k
+= 1 − e
+− cµt
+∞
+∑
+k =0
+p c + k
+k
+∑
+j =0
+( cµt )
+j
+j !
+= 1 − e
+− cµt
+∞
+∑
+k =0
+k
+∑
+j =0
+p 0
+a
+c
+c !
+ρ
+k ( cµt )
+j
+j !
+= 1 − e
+− cµt
+p 0
+a
+c
+c !
+∞
+∑
+j =0
+∞
+∑
+k = j
+( cµt )
+j
+j !
+ρ
+k
+.
+Here, we have used the substitution p c + k = p 0 ( a
+c
+/c !) ρ
+k
+and the limit exchange
+∞
+∑
+k =0
+k
+∑
+j =0
+( ·) =
+∞
+∑
+j =0
+∞
+∑
+k = j
+( ·) .
+
+PAGE 18
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 18
+Deriving service level SL( t ) from { p n } : simplify the two sums
+SL( t ) = 1 − e
+− cµt
+p 0
+a
+c
+c !
+∞
+∑
+j =0
+∞
+∑
+k = j
+( cµt )
+j
+j !
+ρ
+k
+= 1 − e
+− cµt
+p 0
+a
+c
+c !
+∞
+∑
+j =0
+( cµt )
+j
+j !
+∞
+∑
+k = j
+ρ
+k
+.
+Step 1: evaluate the inner k -sum. It is a geometric series:
+∞
+∑
+k = j
+ρ
+k
+= ρ
+j
+∞
+∑
+r =0
+ρ
+r
+=
+ρ
+j
+1 − ρ
+.
+Substitute this result and combine ( cµt )
+j
+ρ
+j
+= ( ρcµt )
+j
+:
+SL( t ) = 1 − p 0
+a
+c
+c !(1 − ρ )
+  
+C ( c,a )
+e
+− cµt
+∞
+∑
+j =0
+( ρcµt )
+j
+j !
+.
+Step 2: evaluate the outer j -sum. Use the exponential-series identity
+∑
+∞
+j =0
+x
+j
+/j ! = e
+x
+with
+the substitution x = ρcµt . Hence,
+∑
+∞
+j =0
+( ρcµt )
+j
+/j ! = e
+ρcµt
+. Further using ρcµ = λ gives
+SL( t ) = 1 − C ( c, a ) e
+− cµt
+e
+λt
+= 1 − C ( c, a ) e
+− ( cµ − λ ) t
+.
+
+PAGE 19
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 19
+A summary of Erlang C performance formulas
+For M/M/c with a = λ/µ and ρ = a/c < 1 :
+Performance measure Formula
+Probability of delay C ( c, a ) = p 0
+a
+c
+c !(1 − ρ )
+; see Slide 10 for p 0
+Mean queue length L q = C ( c, a )
+λ
+cµ − λ
+Mean waiting time W q =
+C ( c, a )
+cµ − λ
+Mean time in system W = W q + 1 /µ
+Service level within t SL( t ) ≡ Pr( ˜W q ≤ t ) = 1 − C ( c, a ) e
+− ( cµ − λ ) t
+Insights from closed-form formulas:
+• The delay probability C ( c, a ) captures how often waiting occurs .
+• Conditional on a positive wait , the factor 1 / ( cµ − λ ) captures how severe
+the congestion is .
+• Service level improves exponentially as the system capacity cµ increases.
+
+PAGE 20
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 20
+Exercise on Erlang C: lunchtime at a university canteen
+During the lunch rush, students arrive to the university canteen and order food
+from four identical self-service kiosks . Assume
+• student arrivals form a Poisson process with rate λ = 148 students/hour;
+• service times are independent and exponential with mean 1 . 5 minutes/student,
+so each kiosk has service rate µ = 40 students/hour ;
+• students don’t abandon the queue and are served in a FCFS manner.
+This is an M/M/c queue with c = 4 servers. Use the Erlange C formulas to
+compute:
+1. the offered load a , utilization ρ , and empty-system probability p 0 ;
+2. the probability of delay C (4 , a ) and mean queue length L q ;
+3. the mean waiting time W q and mean time in the canteen system W ;
+4. the service level for a five-minute target, SL(5 min ) .
+Reminder: Be consistent in time units when applying queueing formulas.
+
+PAGE 21
+1 ERLANG C FORMULA: C ANONICAL MULTI-SER VER QUEUES 21
+Solution: lunchtime at a school canteen
+With c = 4 , λ = 148 /hour, and µ = 40 /hour per kiosk,
+a =
+λ
+µ
+=
+148
+40
+= 3 . 7 , ρ =
+a
+c
+=
+λ
+cµ
+=
+148
+160
+= 0 . 925 .
+For an M/M/c queue,
+p 0 =
+[
+c − 1
+∑
+n =0
+a
+n
+n !
++
+a
+c
+c !(1 − ρ )
+]
+− 1
+= 0 . 00806 ,
+C ( c, a ) = p 0
+a
+c
+c !(1 − ρ )
+= C (4 , 3 . 7) = 0 . 83895 .
+Hence, the performance measures are
+L q = C ( c, a )
+λ
+cµ − λ
+= 0 . 83895
+148
+160 − 148
+= 10 . 35 students ,
+W q =
+C ( c, a )
+cµ − λ
+= 0 . 06991 hour = 4 . 19 minutes ,
+W = W q +
+1
+µ
+= 4 . 19 + 1 . 50 = 5 . 69 minutes ,
+SL(5 min ) = 1 − C ( c, a ) e
+− ( cµ − λ )(5 / 60)
+= 0 . 691 .
+Thus, 83 . 9% of students wait , the mean queue contains about 10 students , and 69 . 1% begin
+service within five minutes .
+
+PAGE 22
+2 Erlang B and Erlang A: Blocking and Abandonment 22
+2 Erlang B and Erlang A Formulas:
+Queues with B locking and
+A bandonment
+Extending M/M/c : Two ways customers can leave without
+service
+Blocking (Erlang B): M/M/c/c Abandonment (Erlang A): M/M/c + M
+Customers rejected immediately when N = c Customers join queue, then may abandon
+No waiting room Unlimited waiting room
+Maximum state is c State space is infinite
+Examples:
+• Blocking: parking lots, appointment slots, or ED beds with no holding area.
+• Abandonment: call centers, online support, restaurants, and ED waiting rooms.
+
+PAGE 23
+2 Erlang B and Erlang A: Blocking and Abandonment 23
+The Erlang B model: M/M/c/c
+There are c servers and no waiting places . View M/M/c/c as a birth-death
+process , where the number of customers in system is the system state N :
+• For state n < c , arrivals occur at rate λ .
+• In state n = c , an arrival is blocked and does not change the state.
+• In state n ≤ c , departures occur at rate µ n = nµ .
+0 1 2 c − 1 c
+λ λ λ
+µ 2 µ cµ
+• Unlike M/M/c , the system is always stable because N ( t ) ≤ c .
+• The stability condition ρ = λ/ ( cµ ) < 1 is not necessary for the
+steady-state probabilities { p n } to exist.
+
+PAGE 24
+2 Erlang B and Erlang A: Blocking and Abandonment 24
+Deriving the Erlang B steady-state probabilities and performance
+measures
+—For 0 ≤ n < c , flow balance is still p n λ = p n +1 ( n + 1) µ. Thus,
+p n = p 0
+a
+n
+n !
+, n = 0 , 1 , . . . , c where a = λ/µ.
+—The state space is finite, so the normalization identity
+∑
+c
+n =0
+p n = 1 gives
+p 0 =
+[
+c
+∑
+n =0
+a
+n
+n !
+] − 1
+.
+—By PASTA , the fraction of arrivals blocked , denoted by B ( c, a ) , equals the
+probability that the system is full , i.e., at state N = c . Therefore,
+B ( c, a ) = p c =
+a
+c
+/c !
+c
+∑
+n =0
+a
+n
+/n !
+.
+—The effective throughput (the actual rate of customers entering the system) is
+λ eﬀ = λ [1 − B ( c, a )] .
+
+PAGE 25
+2 Erlang B and Erlang A: Blocking and Abandonment 25
+Erlang B performance formulas
+For M/M/c/c with offered load a = λ/µ :
+Performance measure Formula
+Blocking probability (PASTA) Pr( blocked ) = B ( c, a )
+Acceptance probability (PASTA) Pr( accepted ) = 1 − B ( c, a )
+Effective throughput λ eﬀ = λ [1 − B ( c, a )]
+Mean number of busy servers (Little’s law) L s = λ eﬀ /µ = a [1 − B ( c, a )]
+Mean utilization per server ¯ρ = L s /c
+Queueing measures L q = W q = 0
+• The M/M/c/c model is simpler than M/M/c to analyze, because the
+blocking mechanism essentially eliminates queueing .
+
+PAGE 26
+2 Erlang B and Erlang A: Blocking and Abandonment 26
+Exercise on Erlang B: a university parking lot
+Drivers arrive at a small university parking lot with 10 parking spaces . Assume
+• car arrivals form a Poisson process with rate λ = 4 cars/hour ;
+• parking durations are independent and exponential with mean 2 hours/car ;
+• there is no waiting area : a driver finding all spaces occupied leaves
+immediately, without waiting or circling.
+This is an M/M/c/c loss system with c = 10 servers, where a parking space is a
+server , and parking duration is service time. Use the Erlang B formulas to compute:
+1. the offered load a , and the probability p 0 that all spaces are empty;
+2. the probability that an arriving car finds no free parking space and must leave;
+3. the rates of cars admitted and turned away , in cars/hour;
+4. the mean number of occupied spaces L s .
+Reminder: be consistent in time units.
+
+PAGE 27
+2 Erlang B and Erlang A: Blocking and Abandonment 27
+Solution: a university parking lot
+With c = 10 , arrival rate λ = 4 cars/hour, and service rate µ = 1 / 2 = 0 . 5 cars/hour,
+a =
+λ
+µ
+=
+4
+0 . 5
+= 8 , p 0 =
+[
+c
+∑
+n =0
+a
+n
+n !
+]
+− 1
+=
+[
+10
+∑
+n =0
+8
+n
+n !
+]
+− 1
+= 0 . 0004112 .
+By PASTA , an arriving car sees a full lot with probability p c :
+Pr( no free space on arrival ) = B ( c, a ) = p 0
+a
+c
+c !
+= 0 . 12166 .
+Hence, the performance measures are
+λ eﬀ = λ [1 − B ( c, a )] = 4(1 − 0 . 12166) = 3 . 51 cars/hour ,
+λ lost = λB ( c, a ) = 4(0 . 12166) = 0 . 49 cars/hour ,
+L s =
+λ eﬀ
+µ
+= a [1 − B ( c, a )] = 8(1 − 0 . 12166) = 7 . 03 occupied spaces .
+Thus, about 12 . 2% of arriving cars must leave , even though the lot is only
+7 . 0267
+10
+= 70 . 3%
+occupied on average.
+
+PAGE 28
+2 Erlang B and Erlang A: Blocking and Abandonment 28
+The Erlang A model: M/M/c + M
+There are c servers and an unlimited waiting line . Unlike Erlang B, customers are
+not blocked, but they may abandon the queue while waiting .
+• Poisson arrivals have rate λ ; exponential service times have rate µ per server.
+• Patience is P i ∼ Exp( θ ) , with mean 1 /θ . A customer leaves if patience
+expires before service begins; there is no abandonment during service .
+• The final + M denotes exponential patience ; memorylessness makes the
+number in system N ( t ) a birth-death process .
+In state N = n , there are min( n, c ) customers in service and max( n − c, 0) waiting:
+λ n = λ, µ n = min( n, c ) µ
+  
+service completions
++ max( n − c, 0) θ
+  
+abandonments
+.
+· · · c − 1 c c + 1 c + 2 · · ·
+λ
+cµ
+λ
+cµ + θ
+λ
+cµ + 2 θ
+
+PAGE 29
+2 Erlang B and Erlang A: Blocking and Abandonment 29
+Deriving the Erlang A steady-state probabilities
+Probability flow balance. With a = λ/µ , use p n = p n − 1 λ/µ n :
+p n = p n − 1
+λ
+nµ
+= p 0
+a
+n
+n !
+, 1 ≤ n ≤ c,
+p c + k = p c + k − 1
+λ
+cµ + kθ
+= p 0
+a
+c
+c !
+k
+∏
+j =1
+λ
+cµ + jθ
+, k ≥ 1 .
+Normalization identity. Substituting into
+∑
+∞
+n =0
+p n = 1 gives
+p 0 =
+[
+c
+∑
+n =0
+a
+n
+n !
++
+a
+c
+c !
+∞
+∑
+k =1
+k
+∏
+j =1
+λ
+cµ + jθ
+]
+− 1
+.
+System stability. The stability condition ρ = λ/ ( cµ ) < 1 is not necessary for the steady-state
+probabilities { p n } to exist. The only requirement is that the abandonment rate θ > 0 .
+Why? θ > 0 guarantees a finite sum in the denominator of p 0 : For θ > 0 , the tail ratio
+p c + k /p c + k − 1 = λ/ ( cµ + kθ ) → 0 as k → ∞ , and so the sum is finite.
+
+PAGE 30
+2 Erlang B and Erlang A: Blocking and Abandonment 30
+Erlang A performance measures
+1. Mean queue length. With Q = max( N − c, 0) customers waiting, average across states:
+L q = E [ Q ] =
+∑ ∞
+n =0
+max( n − c, 0) p n =
+∑ ∞
+n = c
+( n − c ) p n .
+2. Abandonment outflow. Each waiting customer abandons at rate θ , giving the average
+outflow
+λ ab = E [ θQ ] =
+∑ ∞
+n =0
+θ max( n − c, 0) p n = θL q .
+3. Abandonment probability. The probability that an arrival eventually abandons is a ratio of
+abandonment outflow to arrival inflow :
+Pr( abandon ) =
+λ ab
+λ
+=
+θL q
+λ
+.
+4. Service throughput. The flow of customers being served is the total arrival inflow minus
+the abandonment outflow :
+λ served = λ − θL q
+
+PAGE 31
+2 Erlang B and Erlang A: Blocking and Abandonment 31
+Summary of Erlang A performance formulas
+For M/M/c + M with abandonment rate θ > 0 , the probabilities { p n } give:
+Performance measure Formula
+Mean queue length L q =
+∑ ∞
+n = c
+( n − c ) p n
+Mean queue time (Little’s law) W q = L q /λ
+Abandonment probability Pr( abandon ) = θL q /λ
+Service throughput λ served = λ − θL q
+Mean number in service L s = λ served /µ
+Mean utilization per server ¯ρ = L s /c
+• To approximately compute the infinite-sum L q =
+∑
+∞
+n = c
+( n − c ) p n , we truncate the
+state space at some K ; see the next slide.
+
+PAGE 32
+2 Erlang B and Erlang A: Blocking and Abandonment 32
+From infinite sums to numerical evaluation: truncation
+Recall that µ n = min( n, c ) µ + max( n − c, 0) θ . Since p n = p 0
+∏
+n
+j =1
+( λ/µ j ) , we have
+p 0 =
+[
+1 +
+∑ ∞
+n =1
+∏ n
+j =1
+λ
+µ j
+]
+− 1
+.
+1. Truncate the infinite sum at K to approximate p 0 .
+ˆp
+( K )
+0
+=
+[
+1 +
+∑ K
+n =1
+∏ n
+j =1
+λ
+µ j
+]
+− 1
+approximates p 0 .
+2. Compute the remaining probabilities using the same relation .
+ˆp
+( K )
+n
+= ˆp
+( K )
+0
+∏ n
+j =1
+λ
+µ j
+, n = 1 , . . . , K.
+3. Approximate the performance measures accordingly.
+ˆL
+( K )
+q
+=
+∑ K
+n = c
+( n − c ) ˆp
+( K )
+n
+, ˆPr
+( K )
+( abandon ) =
+θ ˆL
+( K )
+q
+λ
+.
+• K is a truncation threshold introduced for computationaly tractability ; it is not a
+physical capacity limit .
+• How to choose K ? Increase K until the performance measures stabilize .
+
+PAGE 33
+2 Erlang B and Erlang A: Blocking and Abandonment 33
+Exercise on Erlang A: lunchtime at a university canteen
+Return to the university canteen with four self-service kiosks . Assume as before
+• student arrivals form a Poisson process with rate λ = 148 students/hour ;
+• independent exponential service times have mean 1 . 5 minutes/student, so
+each kiosk has rate µ = 40 students/hour ;
+• the only difference is that students may abandon while waiting , with
+exponential patience with mean five minutes .
+This is an M/M/ 4 + M queue. Use Erlang A formulas and truncation at K = 8 to
+compute:
+1. the approximate probabilities ˆp 0 , . . . , ˆp 8 ;
+2. mean queue length ˆL q , abandonment probability ˆPr( abandon ) , and service
+throughput ˆλ served ;
+3. how ˆL q compares with the earlier M/M/ 4 result, L q = 10 . 35 students?
+
+PAGE 34
+2 Erlang B and Erlang A: Blocking and Abandonment 34
+Solution: the canteen with abandonment, K = 8
+With c = 4 , λ = 148 /hour, µ = 40 /hour, and mean patience 5 / 60 hour,
+a =
+λ
+µ
+= 3 . 7 , θ =
+1
+5 / 60
+= 12 /hour .
+Normalize at K = 8 . Write ˆp n = ˆp
+(8)
+n
+for brevity:
+ˆp 0 =
+[ ∑ 4
+n =0
+3 . 7
+n
+n !
++
+3 . 7
+4
+4!
+∑ 4
+k =1
+∏ k
+j =1
+148
+160 + 12 j
+] − 1
+≈
+1
+46 . 90524
+≈ 0 . 02132 .
+Compute the remaining probabilities. For n = 1 , . . . , 8 ,
+ˆp n = ˆp n − 1
+λ
+µ n
+= ˆp n − 1
+148
+40 min( n, 4) + 12 max( n − 4 , 0)
+.
+n 0 1 2 3 4 5 6 7 8
+ˆp n .02132 .07888 .14593 .17998 .16648 .14325 .11523 .08701 .06191
+Compute performance measures:
+ˆL q =
+∑ 8
+n =4
+( n − 4) ˆp n = ˆp 5 + 2 ˆp 6 + 3 ˆp 7 + 4 ˆp 8 ≈ 0 . 88237 students .
+ˆPr( abandon ) =
+θ ˆL q
+λ
+≈ 7 . 15% .
+ˆλ served = λ − θ ˆL q = 137 . 4 students/hour .
+
+PAGE 35
+2 Erlang B and Erlang A: Blocking and Abandonment 35
+Solution (cont’d): check truncation and compare with M/M/K
+Check the truncation. Repeat the calculation with larger K :
+ˆL
+(8)
+q
+= 0 . 8824 , ˆL
+(12)
+q
+= 1 . 3143 , ˆL
+(20)
+q
+= 1 . 3961 , ˆL
+(40)
+q
+= 1 . 3964 .
+• K = 8 understates L q by about 37% . Increase K for accurate results.
+Comparison with Erlang C. Only patience differs; arrivals and service are unchanged.
+M/M/ 4 M/M/ 4 + M
+Performance measure Exact K = 20 (truncated)
+Mean queue length (students) 10.347 1.396
+Mean queue time (minutes) 4.195 0.566
+Abandonment probability 0 11.32%
+Service throughput (students/hour) 148.00 131.25
+Insights from the comparison.
+• A 7.4-fold reduction in mean queue length , while only 11.32% of students abandon .
+• Abandonment reduces effective demand for service to
+λ served = λ − θL q ≈ 131 . 25 /hour. External arrivals remain λ = 148 /hour.
+• Mean queue length is very sensitive to load near capacity . Reducing service demand
+widens the capacity margin cµ − λ served from 12 to 28 . 75 students/hour.
+
+PAGE 36
+3 POLLACZEK–KHINCHINE FORMULA 36
+3 Pollaczek–Khinchine formula: Queues
+with non-exponential primitives
+The G/G/ 1 model
+—So far, we have assumed exponential interarrival and service-time distributions for
+tractability. We now consider general interarrival and service-time distributions :
+• I.I.D. interarrival times X i with a general distribution and E [ X ] = 1 /λ .
+• I.I.D. service times S i with a general distribution, E [ S ] = 1 /µ and E [ S
+2
+] < ∞ .
+• There is a single server that serve customers in a FCFS manner.
+• Assume that server utilization ρ = λ E [ S ] = λ/µ < 1 .
+—Once we move beyond the regime of exponential primtives, the model rapidly
+becomes intractable .
+—In fact, simple exact performance formulas are exceptional .
+—General G/G/ 1 and M/G/c queues do not have simple characterizations.
+—As we will learn, M/G/ 1 queue admits the P–K mean-queue-length formula .
+—This model is at the boundary that separates tractable models from intractable
+ones.
+
+PAGE 37
+3 POLLACZEK–KHINCHINE FORMULA 37
+Exact Pollaczek–Khinchine (P–K) formula for M/G/ 1
+Define the service-time squared coeﬀicient of variation :
+c
+2
+s =
+Var( S )
+E [ S ] 2
+.
+Recall that ρ = λ/µ . The P–K mean queue-length formula is
+L
+M/G/ 1
+q =
+1 + c
+2
+s
+2
+ρ
+2
+1 − ρ
+.
+For M/M/ 1 , the Erlange C formula gives
+L
+M/M/ 1
+q =
+ρ
+2
+1 − ρ
+.
+Insights:
+• When S is exponentially distributed, c
+2
+s = 1 , and so the two formulas coincide.
+• At fixed means, L q increases linearly with service-time variance .
+• The impact of service variability is amplified by how critically loaded the
+system is. If ρ is close to 1, every increase in c
+2
+s leads to a significantly longer
+queue length.
+
+PAGE 38
+3 POLLACZEK–KHINCHINE FORMULA 38
+Service variability: comparison with M/M/ 1
+Hold the Poisson arrival rate λ and mean service time 1 /µ fixed, while varying c
+2
+s :
+L
+M/G/ 1
+q
+L
+M/M/ 1
+q
+=
+1 + c
+2
+s
+2
+.
+One canteen kiosk: keep λ = 32 students/hour and mean service time 1 . 5
+minutes; vary the service-duration variance :
+Service-time model c
+2
+s L q (waiting)
+Constant: M/D/ 1 0 1.60
+Exponential: M/M/ 1 1 3.20
+General, more variable: M/G/ 1 3 6.40
+• Reducing service variability is a way to reduce queue length.
+
+PAGE 39
+4 ANALYTICAL FORMULAS VERSUS SIMULATION 39
+4 Analytical Formulas Versus
+Simulation
+M/M/c : simulation agrees with Erlang C
+Consider an M/M/ 3 queue with λ = 9 /hour and µ = 4 /hour per server. Thus,
+ρ = λ/ ( cµ ) = 0 . 75 .
+Measure Run 1 Run 2 Run 3 Mean Erlang C
+Probability of wait 57.0% 56.7% 57.0% 56.9% 56.8%
+W q (minutes) 11.48 11.61 11.30 11.46 11.36
+Experiment: each run discards 20,000 arrivals for warm-up and measures the next
+100,000 arrivals. The three runs use independent random seeds.
+• Simulation closely matches the Erlang C formula when modeling assumptions
+required by the formula are satisfied .
+• Small differences across runs reflect simulation sampling variation.
+
+PAGE 40
+4 ANALYTICAL FORMULAS VERSUS SIMULATION 40
+G/G/c : the exponential formula can be far off
+Keep λ = 9 /hour, mean service time 15 minutes, and c = 3 . But consider general
+interarrival and service-time distributions .
+Interarrival / service c
+2
+a c
+2
+s Sim. W q Erlang C
+Gamma / constant 0.25 0 0.75 min 11.36 min
+Lognormal / lognormal 2.25 2.25 22.59 min 11.36 min
+Simulation values average three runs using the same settings as the previous slide.
+• Erlang C predicts about 15 times the simulated wait in the first case and only
+half in the second.
+Erlang C formula fails dramatically for more complex models.
+
+PAGE 41
+4 ANALYTICAL FORMULAS VERSUS SIMULATION 41
+Next week: discrete-event simulation (DES)
+How can we evaluate a more complex models for which analytical
+characterizations are unavailable?
+A discrete-event simulation tracks the system as events occur. It lets us retain
+general interarrival and service-time distributions when a convenient analytical
+formula is unavailable.

@@ -1,0 +1,52 @@
+{
+  "zip_sha256": "7e4c840f36c0bacffa6a1714b1d0ceeb43557ddb49765a4b4aa655cb25bc88eb",
+  "csv_sha256": "42969169dc3f13f33b014eb6f4963599cbb0d0371ede1b5d9fcf819b9d57f5eb",
+  "rows": 60000,
+  "columns": 14,
+  "checks": {
+    "shape": true,
+    "missing": true,
+    "duplicates": true,
+    "priorities": true,
+    "services": true,
+    "nonnegative": true,
+    "doctor_ids": true,
+    "peak_flag": true,
+    "time_identity": true,
+    "run_sizes": true,
+    "scenario_runs": true,
+    "chronology": true
+  },
+  "dtypes": {
+    "RunID": "int64",
+    "PatientID": "int64",
+    "ArrivalTime": "int64",
+    "Priority": "int64",
+    "DoctorID": "int64",
+    "DocServiceTime": "int64",
+    "MedServiceTime": "int64",
+    "DocWaitTime": "int64",
+    "MedWaitTime": "int64",
+    "TotalTimeInHospital": "int64",
+    "IsPeakArrival": "int64",
+    "Scenario": "str",
+    "NumDoctors": "int64",
+    "PeakLimit": "int64"
+  },
+  "missing": {
+    "RunID": 0,
+    "PatientID": 0,
+    "ArrivalTime": 0,
+    "Priority": 0,
+    "DoctorID": 0,
+    "DocServiceTime": 0,
+    "MedServiceTime": 0,
+    "DocWaitTime": 0,
+    "MedWaitTime": 0,
+    "TotalTimeInHospital": 0,
+    "IsPeakArrival": 0,
+    "Scenario": 0,
+    "NumDoctors": 0,
+    "PeakLimit": 0
+  }
+}

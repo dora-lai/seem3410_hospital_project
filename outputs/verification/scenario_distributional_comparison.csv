@@ -1,0 +1,7 @@
+Scenario,NumDoctors,PeakLimit,mean,std,count,comparison
+Baseline_2Doc_240Peak,2,240,360.884,39.4006441468,50,source scenarios have distinct inputs; distributional context only
+Peak_120Min,2,120,319.064,38.9831662257,50,source scenarios have distinct inputs; distributional context only
+Peak_360Min,2,360,414.874,40.5153979799,50,source scenarios have distinct inputs; distributional context only
+Staffing_1Doc,1,240,1531.474,46.7700619837,50,source scenarios have distinct inputs; distributional context only
+Staffing_3Doc,3,240,9.812,7.3432640243,50,source scenarios have distinct inputs; distributional context only
+Staffing_4Doc,4,240,0.002,0.0141421356237,50,source scenarios have distinct inputs; distributional context only

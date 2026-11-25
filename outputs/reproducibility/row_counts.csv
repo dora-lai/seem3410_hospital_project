@@ -1,0 +1,5 @@
+artifact,run_rows,patient_rows,matched_hashes,valid_KPIs
+main,150,30000,True,True
+replay,150,30000,True,True
+confirmation,150,30000,True,True
+sensitivity (includes reused primary base),1500,300000,True,True

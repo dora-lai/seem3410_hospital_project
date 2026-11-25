@@ -1,0 +1,1098 @@
+
+PAGE 1
+1
+SEEM3410 System Modeling and
+Simulation
+Week 6:
+Design of Simulation Experiments for
+System Improvement
+W eiliang Liu
+Department of SEEM
+The Chinese University of Hong Kong
+2026–27 T erm 1
+
+PAGE 2
+2
+Which decision settings would improve a service system?
+Empirical
+data
+Input
+distributions
+Discrete-Event
+Simulation
+Output
+analysis
+Decision
+Settings
+Week 6
+Week 5 Weeks 3–4
+A decision setting specifies the levels of all relevant decision levers : for
+example, 3 servers and 2 waiting lines.
+This week’s motivating question:
+Which decision settings should we simulate, and what do their
+comparisons reveal about decision effects and interactions?
+
+PAGE 3
+WEEK 6 ROADMAP 3
+Week 6 Roadmap
+1 Designing Simulation Experiments
+2 Decision Comparisons via Common Random Numbers
+3 Full Factorial Designs
+4 Response Surfaces and Metamodels
+
+PAGE 4
+1 DESIGNING SIMULATION EXPERIMENTS 4
+1 Designing Simulation Experiments
+Design of experiments (DOE) specifies which decision settings to simulate
+and how to organize their runs to answer a system-improvement question.
+1. Define the improvement question and performance measure .
+2. Choose decision settings : specify each decision lever and its level.
+3. Specify how to run the simulations and generate random inputs for
+each decision setting.
+4. Estimate how each decision lever affects performance, how levers
+interact, and the uncertainty in these estimates .
+In previous lectures, we have learned how to estimate performance at one
+decision setting .
+In this week, we will learn how to estimate the performance difference
+between two settings, and combine such comparisons to identify individual
+lever effects and interactions.
+
+PAGE 5
+1 DESIGNING SIMULATION EXPERIMENTS 5
+Running example: A service center with one FCFS waiting line
+• In each day, the system starts empty and operates for eight hours.
+Throughout a day, arrivals follow a Poisson process at λ = 1 . 5 /minute.
+Baseline service duration is S i ∼ Gamma(2 , 0 . 5) .
+• Decision lever 1: There are c identical servers; c = 2 is the baseline.
+• Decision lever 2: Let v be the service speed multiplier v so that
+customer i ’s service duration is S i /v :
+– v = 1 is the baseline; v = 1 . 2 means 20% greater speed.
+– Increasing v can represent investment in more training programs
+or better service flow .
+• Improvement question: How does adding a server (increase c ),
+increasing service speed ( v ), or having both, reduce waiting time?
+• Performance measure: Expected average customer waiting time .
+
+PAGE 6
+1 DESIGNING SIMULATION EXPERIMENTS 6
+Decision setting: choosing operating level for each decision lever
+To define a decision setting , identify the decision levers (controllable DOE
+factors) and assign one level (chosen value) to each.
+Decision lever Low level ( − 1) High level (+1)
+Factor A : staﬀing c 2 servers 3 servers
+Factor B : speed v 1 . 0 1 . 2
+• The decision setting ( c, v ) = (3 , 1 . 2) means staﬀing at 3 servers and
+speed at 1.2.
+• A specific ( c, v ) is also called a design point in DOE.
+
+PAGE 7
+1 DESIGNING SIMULATION EXPERIMENTS 7
+Estimate performance at one decision setting
+Fix x = ( c, v ) and simulate R independent days of the service center, each
+starting empty and lasting for eight hours.
+• Day r ∈ { 1 , 2 , . . . , R } has N r arrivals before closing.
+• w r,i ( x ) is customer i ’s simulated wait from arrival to service start.
+• Averaging over customers yields one day’s simulated average wait
+Y r ( x ) =
+1
+N r
+∑ N r
+i =1
+w r,i ( x ) , θ ( x ) = E [ Y r ( x )] .
+• To estimate the unknown expected wait θ ( x ) , use R runs to compute
+Y R ( x ) =
+1
+R
+R
+∑
+r =1
+Y r ( x ) , s
+2
+( x ) =
+1
+R − 1
+R
+∑
+r =1
+[ Y r ( x ) − Y R ( x )]
+2
+,
+where s ( x ) measures variation among daily averages.
+Approximate 95% CI for θ ( x ) : Y R ( x ) ± 1 . 96
+s ( x )
+√
+R
+.
+
+PAGE 8
+2 DECISION COMPARISONS VIA COMMON RANDOM NUMBERS 8
+2 Decision Comparisons via Common
+Random Numbers
+Motivating question: How do we estimate the performance difference
+between a proposal decision x 1 and a baseline x 0 ?
+• For a given performance measure θ , our target is
+∆ = θ ( x 1 ) − θ ( x 0 ) .
+For waiting time, ∆ < 0 means the proposal improves performance.
+• The point estimate is easy: subtract the two simulated means.
+ˆ∆ = Y R ( x 1 ) − Y R ( x 0 ) .
+How do we quantify the uncertainty in ˆ∆ ?
+This depends on how the two sets of simulation outputs are generated.
+
+PAGE 9
+2 DECISION COMPARISONS VIA COMMON RANDOM NUMBERS 9
+Common random numbers (CRN): matched random inputs
+Run r :
+Same set of
+random seeds
+Baseline x 0
+Y r ( x 0 )
+Proposal x 1
+Y r ( x 1 )
+Paired difference
+D r = Y r ( x 1 ) − Y r ( x 0 )
+• CRN uses a separate random stream for each stochastic mechanism
+(e.g., arrivals and service), and then, in each Run r , it uses the same
+random seed for each corresponding stream at both decision settings.
+• Use a new set of random seeds for Run r + 1 , so D 1 , . . . , D R are
+independent.
+• CRN helps isolate the decision effect from simulation randomness
+by comparing decision settings under the same random inputs.
+
+PAGE 10
+2 DECISION COMPARISONS VIA COMMON RANDOM NUMBERS 10
+Paired differences: uncertainty and the benefit of CRN
+For R independent run pairs, the point estimate for ∆ is
+D R =
+1
+R
+R
+∑
+r =1
+D r = Y R ( x 1 ) − Y R ( x 0 ) .
+Estimate its uncertainty from the variability of D r :
+s
+2
+D =
+1
+R − 1
+R
+∑
+r =1
+( D r − D R )
+2
+, ˆSE( D R ) =
+s D
+√
+R
+.
+Approximate 95% CI for ∆ : D R ± 1 . 96
+s D
+√
+R
+.
+Why can CRN improve precision? Let σ
+2
+j = Var( Y r ( x j )) and
+γ = Cov( Y r ( x 1 ) , Y r ( x 0 )) . Then
+Var( D r ) = Var( Y r ( x 1 ) − Y r ( x 0 )) = σ
+2
+1 + σ
+2
+0 − 2 γ,
+Independent sampling has γ = 0 ; CRN helps when γ > 0 .
+
+PAGE 11
+2 DECISION COMPARISONS VIA COMMON RANDOM NUMBERS 11
+Example: Estimating performance difference
+Illustrative daily average waiting time: Y r ( x 0 ) is under the baseline
+decision on day r , and Y r ( x 1 ) the proposal decision on the same day with
+the same random seeds.
+Day r Y r ( x 0 ) Y r ( x 1 ) D r = Y r ( x 0 ) − Y r ( x 1 )
+1 1.0 0.6 − 0 . 4
+2 2.0 1.5 − 0 . 5
+3 3.0 2.4 − 0 . 6
+D 3 = ( − 0 . 4 − 0 . 5 − 0 . 6) / 3 = − 0 . 5 ,
+s
+2
+D =
+(0 . 1)
+2
++ 0
+2
++ ( − 0 . 1)
+2
+3 − 1
+= 0 . 01 , ˆSE( D 3 ) =
+0 . 1
+√
+3
+≈ 0 . 058 .
+Estimated waiting reduction: 0.5 minute; standard error: 0.058 minute.
+
+PAGE 12
+3 FULL F ACTORIAL DESIGNS 12
+3 Full Factorial Designs
+• §2 showed how to do paired comparisons for two decision settings.
+• Comparing ( c, v ) = (2 , 1 . 0) with ( c, v ) = (3 , 1 . 2) changes both staﬀing
+and speed levers, so the difference gives their combined effect .
+• In DOE language, a lever is an experiment factor that can be varied.
+To understand the contribution of each factor, we need to compare more
+decision settings:
+• Staﬀing effect: compare 2 and 3 servers at each speed level.
+• Speed effect: compare speeds 1.0 and 1.2 at each staﬀing level.
+• Interaction: does the effect of one lever depend on the other lever?
+A factorial design specifies combinations of factor levels to compare, which
+extends paired comparisons to estimate factor effects and interactions.
+
+PAGE 13
+3 FULL F ACTORIAL DESIGNS 13
+A full factorial design explores all selected levels
+• To learn joint effects and interations, a full factorial design evaluates
+every decision setting formed by combining one selected level per lever.
+• In our service-center example, there are two levers (server number c and
+speed v ) and two levels for each lever (baseline vs proposal).
+• This gives a 2
+2
+design: four decision settings .
+• This design requires 4 R paired simulation runs, with R independent
+runs for each decision setting.
+Decision setting d x A x B Servers c Speed v
+(1) − 1 − 1 2 1.0
+a +1 − 1 3 1.0
+b − 1 +1 2 1.2
+ab +1 +1 3 1.2
+
+PAGE 14
+3 FULL F ACTORIAL DESIGNS 14
+Defining low and high factor levels
+Decision setting d x A x B Servers c Speed v
+(1) − 1 − 1 2 1.0
+a +1 − 1 3 1.0
+b − 1 +1 2 1.2
+ab +1 +1 3 1.2
+• The decision setting d lists factors at their high levels; (1) means all low.
+• The codes x A , x B ∈ {− 1 , +1 } label each lever’s low or high level in d .
+• A natural ordering ranks levels by magnitude: 2 < 3 servers and
+1 . 0 < 1 . 2 service speed.
+• When no natural ordering exists (e.g., two service procedures), low/high
+are chosen labels. A common convention is to label the current
+operating level as low and the alternative as high.
+
+PAGE 15
+3 FULL F ACTORIAL DESIGNS 15
+First compare one factor at a fixed level of the other
+Use m ( d ) for the simulated average waiting time at decision settings
+d ∈ { 1 , a, b, ab } . The following are illustrative values.
+Mean wait (minutes) B − (speed v = 1 . 0 ) B + (speed v = 1 . 2 )
+A − (2 servers) m (1) = 12 m ( b ) = 8
+A + (3 servers) m ( a ) = 6 m ( ab ) = 5
+The conditional effect of A measures the effect of increasing the level of A
+at fixed level of B :
+At B − ( Speed v = 1 . 0) : E A |B −
+= m ( a ) − m (1) = 6 − 12 = − 6 ,
+At B + ( Speed v = 1 . 2) : E A |B +
+= m ( ab ) − m ( b ) = 5 − 8 = − 3 .
+• An extra server saves 6 minutes at the basline speed but only 3 minutes
+after service is faster.
+• The effect of A depends on the level of B , suggesting interaction .
+
+PAGE 16
+3 FULL F ACTORIAL DESIGNS 16
+The main effect averages the conditional effects
+The main effect of staﬀing lever A is an average of its conditional effect
+over different levels of speed lever B :
+E A =
+E A |B −
++ E A |B +
+2
+=
+( m ( a ) − m (1)) + ( m ( ab ) − m ( b ))
+2
+=
+m ( a ) + m ( ab )
+2
+  
+average at A −
+−
+m (1) + m ( b )
+2
+  
+average at A +
+= − 4 . 5 minutes .
+Equivalently, subtract the average at A − from the average at A + .
+Similarly, the main effect of speed lever B is
+E B =
+E B |A −
++ E B |A +
+2
+=
+m ( b ) + m ( ab ) − m (1) − m ( a )
+2
+=
+8 + 5 − 12 − 6
+2
+= − 2 . 5 minutes .
+
+PAGE 17
+3 FULL F ACTORIAL DESIGNS 17
+The two-level interaction effect
+• An interaction occurs when one factor’s effect depends on the other.
+• With no interaction, the conditional effect of A at B + shoud be the
+same as that at B − , i.e., E A |B +
+= E A |B −
+.
+• The interaction effect, E AB , is defined as half the difference of
+conditional effects:
+E AB =
+E A |B +
+− E A |B −
+2
+=
+( m ( ab ) − m ( b )) − ( m ( a ) − m (1))
+2
+=
+m (1) − m ( a ) − m ( b ) + m ( ab )
+2
+=
+12 − 6 − 8 + 5
+2
+= 1 . 5 minutes .
+• Increasing service speed reduces the waiting-time benefit of adding a
+server from 6 to 3 minutes. The difference is 2 E AB = 3 minutes.
+• A positive interaction here means less combined waiting reduction than
+an additive sum.
+
+PAGE 18
+3 FULL F ACTORIAL DESIGNS 18
+An interaction plot shows conditional effects
+Mean wait (min)
+0
+4
+8
+12
+(1)
+a
+b
+ab
+A − A +
+B −
+B +
+• Each line fixes one level
+of B .
+• Its vertical change is the
+conditional effect of A .
+• Nonparallel lines indicate
+interaction in these
+means, i.e., E AB = ̸= 0 .
+• With simulated means,
+the nonparallelism can
+also come from
+simulation uncertainty.
+
+PAGE 19
+3 FULL F ACTORIAL DESIGNS 19
+Estimating factorial effects and interactions using CRN
+• In each Run r ∈ { 1 , . . . , R } , simulate all four decision settings
+d ∈ { 1 , a, b, ab } using common random numbers.
+• Replace the unknown means m ( d ) in the effect formulas by the
+simulation outputs Y r ( d ) :
+E A,r =
+1
+2
+{ [ Y r ( a ) − Y r (1)] + [ Y r ( ab ) − Y r ( b )] } ,
+E B,r =
+1
+2
+{ [ Y r ( b ) − Y r (1)] + [ Y r ( ab ) − Y r ( a )] } ,
+E AB,r =
+1
+2
+{ [ Y r ( ab ) − Y r ( b )] − [ Y r ( a ) − Y r (1)] } .
+• Because random seed sets are independent across runs, for effect
+S ∈ { A, B, AB } , E [ E S,r ] = E S . To estimate E S , use
+E S,R =
+1
+R
+R
+∑
+r =1
+E S,r , s
+2
+E S
+=
+1
+R − 1
+R
+∑
+r =1
+( E S,r − E S,R )
+2
+.
+Using normal approximation, we can construct a 95% CI for E S :
+E S,R ± 1 . 96
+s E S
+√
+R
+.
+
+PAGE 20
+3 FULL F ACTORIAL DESIGNS 20
+Factorial results for the simulated service center
+R = 60 independent simulation runs, with CRN across the four decision settings
+Setting d x A x B c v ¯Y R ( d ) (min) 95% CI
+(1) − − 2 1.0 0.976 [0.901, 1.052]
+a + − 3 1.0 0.124 [0.115, 0.134]
+b − + 2 1.2 0.412 [0.384, 0.440]
+ab + + 3 1.2 0.059 [0.054, 0.064]
+Effect ¯E S,R (min) SE Approximate 95% CI
+E A -0.603 0.023 [-0.648, -0.557]
+E B -0.315 0.014 [-0.342, -0.287]
+E AB 0.249 0.012 [0.225, 0.274]
+• Negative main effects indicate lower waiting when factor levels are increased.
+• Positive interaction means the two waiting reductions partly overlap : the
+extra server helps less after service is faster.
+
+PAGE 21
+3 FULL F ACTORIAL DESIGNS 21
+A third factor: does demand change the effects of our decisions?
+• So far, we varied staﬀing c and speed v at a fixed demand arrival rate λ .
+• Now, we want to understand whether their effects and interaction
+change when demand rises.
+Factor Low ( − 1) High (+1)
+A : server number c 2 3
+B : service speed v 1.0 1.2
+C : demand rate λ 1.5/min 1.65/min
+• A and B are decision levers. C is a scenario factor .
+• With 2 levels for the three factors, a full 2
+3
+factorial design evaluates all
+eight design points , corresponding to the eight combinations.
+• This requires 8 R paired simulation runs, where R is the number of
+replications used to estimate the performance under each combination.
+
+PAGE 22
+3 FULL F ACTORIAL DESIGNS 22
+Eight design points in 2
+3
+factorial design
+• The first column lists factors at high levels; (1) means all low.
+• The table gives illustrative expected waits m ( d ) , which needs to be
+estimated from simulation later.
+Design point d x A x B x C m ( d ) (min)
+(1) − 1 − 1 − 1 12
+a +1 − 1 − 1 6
+b − 1 +1 − 1 8
+ab +1 +1 − 1 5
+c − 1 − 1 +1 16
+ac +1 − 1 +1 10
+bc − 1 +1 +1 12
+abc +1 +1 +1 7
+
+PAGE 23
+3 FULL F ACTORIAL DESIGNS 23
+Main effects in 2
+3
+factorial design
+• For the main effect of the staﬀing factor A , compare A + with A − at
+each fixed combination of B and C :
+E A =
+1
+4
+{ [ m ( a ) − m (1)] + [ m ( a b ) − m ( b )]
++ [ m ( a c ) − m ( c )] + [ m ( a bc ) − m ( bc )] }
+=
+− 6 − 3 − 6 − 5
+4
+= − 5 minutes .
+• The same rule gives main effects for speed factor B and demand C :
+E B =
+1
+4
+{ [ m ( b ) − m (1)] + [ m ( a b ) − m ( a )]
++ [ m ( b c ) − m ( c )] + [ m ( a b c ) − m ( ac )] } = − 3 minutes ,
+E C =
+1
+4
+{ [ m ( c ) − m (1)] + [ m ( a c ) − m ( a )]
++ [ m ( b c ) − m ( b )] + [ m ( ab c ) − m ( ab )] } = 3 . 5 minutes .
+
+PAGE 24
+3 FULL F ACTORIAL DESIGNS 24
+Two-factor interaction in 2
+3
+factorial design
+• Let E AB |C −
+and E AB |C +
+denote the AB interaction conditional on
+low demand and high demand , respectively.
+• With C fixed, apply the earlier 2
+2
+interaction formula for AB :
+C − : low demand C + : high demand
+B − B + B − B +
+A − m (1) = 12 m ( b ) = 8 m ( c ) = 16 m ( bc ) = 12
+A + m ( a ) = 6 m ( ab ) = 5 m ( ac ) = 10 m ( abc ) = 7
+E AB |C − =
+1
+2
+{ [ m ( ab ) − m ( b )] − [ m ( a ) − m (1)] } = 1 . 5 minute
+E AB |C + =
+1
+2
+{ [ m ( abc ) − m ( bc )] − [ m ( ac ) − m ( c )] } = 0 . 5 minute .
+• The two-factor interaction E AB is the average of the two conditional
+staﬀing–speed interactions over C − and C + :
+E AB =
+E AB |C −
++ E AB |C +
+2
+=
+1 . 5 + 0 . 5
+2
+= 1 minute .
+
+PAGE 25
+3 FULL F ACTORIAL DESIGNS 25
+The other two-factor interactions: AC and BC
+• Similarly, each interaction averages over the factor that is held fixed:
+E AC =
+1
+2
+( E AC |B − + E AC |B + ) , E BC =
+1
+2
+( E BC |A − + E BC |A + ) .
+• For example, the staﬀing–demand interaction at low speed is
+E AC |B − =
+1
+2
+{ [ m ( ac ) − m ( c )] − [ m ( a ) − m (1)] } = 0 .
+The staﬀing–demand interaction at high speed is
+E AC |B − =
+1
+2
+{ [ m ( abc ) − m ( bc )] − [ m ( ab ) − m ( b )] } = 0 .
+• The final formulas for interactions AC and BC are:
+E AC =
+1
+4
+{ [ m (1) − m ( a ) − m ( c ) + m ( ac )]
++ [ m ( b ) − m ( ab ) − m ( bc ) + m ( abc )] } = − 0 . 5 ,
+E BC =
+1
+4
+{ [ m (1) − m ( b ) − m ( c ) + m ( bc )]
++ [ m ( a ) − m ( ab ) − m ( ac ) + m ( abc )] } = − 0 . 5 .
+
+PAGE 26
+3 FULL F ACTORIAL DESIGNS 26
+Three-factor interaction in 2
+3
+factorial design
+• A three-factor interaction measures how a two-factor interaction
+changes with the third factor.
+• In our example, E ABC captures whether the staﬀing–speed interaction
+AB itself change with demand C . It is half the difference between the
+conditional interaction effects:
+E ABC =
+E AB |C +
+− E AB |C −
+2
+=
+0 . 5 − 1 . 5
+2
+= − 0 . 5 minute .
+• A negative E ABC means that higher demand makes the positive
+staﬀing–speed interaction smaller.
+• In other words, with higher demand, a faster service reduces the
+waiting-time benefit of an extra server less.
+• Substituting the conditional formulas gives the general expression:
+E ABC =
+1
+4
+{ [ m ( c ) − m ( ac ) − m ( bc ) + m ( abc )]
+− [ m (1) − m ( a ) − m ( b ) + m ( ab )] } .
+
+PAGE 27
+3 FULL F ACTORIAL DESIGNS 27
+Two interaction plots reveal the three-factor effect
+Left panel = low demand C − ; right panel = high demand C + .
+solid line= low speed B − ; dashed line= high speed B + .
+• The slope of each line shows the effect of the staﬀing factor A given
+factor B and C .
+• At C − , staﬀing effects are − 6 and − 3 for B − and B + , so
+E AB |C −
+= [( − 6) − ( − 3)] / 2 = 1 . 5 .
+• At C + , these are − 6 and − 5 , so E AB |C +
+= [( − 6) − ( − 5)] / 2 = 0 . 5 .
+• The different degrees of nonparallelism in the two panels implies
+E AB |C −
+̸= E AB |C +
+, so there is a nonzero three-order interaction
+E ABC = (0 . 5 − 1 . 5) / 2 = − 0 . 5 .
+
+PAGE 28
+3 FULL F ACTORIAL DESIGNS 28
+Unified approach for computing main effects and interactions
+Extend slide 22’s table with effect label S ∈ { A, B, C, AB, AC, BC, ABC }
+and products of coded levels ( − 1 = low; +1 = high):
+A B C AB AC BC ABC
+Setting d x A x B x C x A x B x A x C x B x C x A x B x C m ( d ) (min)
+(1) − 1 − 1 − 1 +1 +1 +1 − 1 12
+a +1 − 1 − 1 − 1 − 1 +1 +1 6
+b − 1 +1 − 1 − 1 +1 − 1 +1 8
+ab +1 +1 − 1 +1 − 1 − 1 − 1 5
+c − 1 − 1 +1 +1 − 1 − 1 +1 16
+ac +1 − 1 +1 − 1 +1 − 1 − 1 10
+bc − 1 +1 +1 − 1 − 1 +1 − 1 12
+abc +1 +1 +1 +1 +1 +1 +1 7
+For design point d ∈ D := { 1 , a, . . . , abc } , define w S ( d ) as its +1 or − 1
+entry in column S . For example,
+w A ( ab ) = 1 , w ABC (1) = − 1 , w AB ( c ) = − 1 .
+
+PAGE 29
+3 FULL F ACTORIAL DESIGNS 29
+Unified approach for computing main effects and interactions
+A B C AB AC BC ABC
+Setting d x A x B x C x A x B x A x C x B x C x A x B x C m ( d ) (min)
+(1) − 1 − 1 − 1 +1 +1 +1 − 1 12
+a +1 − 1 − 1 − 1 − 1 +1 +1 6
+b − 1 +1 − 1 − 1 +1 − 1 +1 8
+ab +1 +1 − 1 +1 − 1 − 1 − 1 5
+c − 1 − 1 +1 +1 − 1 − 1 +1 16
+ac +1 − 1 +1 − 1 +1 − 1 − 1 10
+bc − 1 +1 +1 − 1 − 1 +1 − 1 12
+abc +1 +1 +1 +1 +1 +1 +1 7
+Then, the previously derived effects can all be written as
+E S =
+1
+4
+∑
+d ∈D
+w S ( d ) m ( d ) .
+For example, E AB =
+(12+5+16+7) − (6+8+10+12)
+4
+= 1 minute.
+
+PAGE 30
+3 FULL F ACTORIAL DESIGNS 30
+Estimate the factor effects from simulation with CRN
+• In each Run r ∈ { 1 , . . . , R } , use the same set of random seeds to
+simulate all eight design points d ∈ D = { 1 , a, . . . , abc } .
+• Let Y r ( d ) be the output at point d . For effect S ∈ { A, B, . . . , ABC } ,
+E S,r =
+1
+4
+∑
+d ∈D
+w S ( d ) Y r ( d ) , E [ E S,r ] = E S .
+• Use independent seed sets across runs, so that E S can be estimated by
+E S,R =
+1
+R
+R
+∑
+r =1
+E S,r .
+• Let s E S
+be the sample standard deviation of the R effect estimates.
+• Using normal approximation, we can construct a 95% CI for E S as
+E S,R ± 1 . 96
+s E S
+√
+R
+.
+
+PAGE 31
+4 RESPONSE SURF ACES AND METAMODELS 31
+4 Response Surfaces and Metamodels
+• Write each design point as x , e.g., x = ( c, v ) in our service-center
+example, or x = ( c, v, λ ) if the demand scenario is also included.
+• From a factorial design with D design points x 1 , . . . , x D , we obtain
+estimates ¯Y R ( x i ) of the performance-response surface
+θ ( c, v ) = E [ Y r ( c, v )]
+at finitely many points x i , i = 1 , . . . , D .
+• How can we predict performance θ ( c, v ) at an untested setting x ̸= x i ?
+• A metamodel g ( c, v ) is a simple function fitted to these simulation
+means to approximate the surface:
+g ( c, v ) ≈ θ ( c, v ) .
+• It predicts performance at untested settings ; these predictions need
+to be checked by additional simulations.
+
+PAGE 32
+4 RESPONSE SURF ACES AND METAMODELS 32
+Using factor effects to construct a metamodel
+• For the earlier 2
+2
+experiment, assume the following metamodel on
+staﬀing c and speed v , where the coeﬀicients α need to be
+determined:
+g ( c, v ) = α 0 + α c c + α v v + α cv cv.
+• There are four unknowns , which can be solved given the four
+performance estimates from the 2
+2
+experiment.
+• For example, according to g , adding one server ( c → c + 1 ) changes
+the prediction by α c + α cv v . The earlier 2
+2
+experiment finds that the
+conditional staﬀing effects are − 6 at v = 1 . 0 and − 3 at v = 1 . 2 .
+• Thus, α c and α cv should satisfy
+α c + α cv × 1 = − 6 , α c + α cv × 1 . 2 = − 3 ,
+yielding α cv = 15 and α c = − 21 .
+• Similarly, α v can be determined from the conditional speed effects, and
+α 0 from mathcing g ( c, v ) with ¯Y R ( c, v ) on any tested ( c, v ) . This gives
+g ( c, v ) = 74 − 21 c − 50 v + 15 cv.
+
+PAGE 33
+4 RESPONSE SURF ACES AND METAMODELS 33
+The fitted surface predicts between the observed settings
+• Lines are slices of g ( c, v ) = 74 − 21 c − 50 v + 15 cv at fixed staﬀing c ;
+• dots are the four tested means used for fitting.
+• At untested speed 1.1, g (2 , 1 . 1) = 10 minutes, which needs to be
+further examined via simulations .
+
+PAGE 34
+4 RESPONSE SURF ACES AND METAMODELS 34
+Common parametric forms for L factors
+More generally, with L numerical design factors x = ( x 1 , . . . , x L ) , we use
+the following metamodels with unknown coeﬀicients collected in α .
+• Additive first-order model: equal increments in one factor have a
+constant effect, holding the others fixed.
+g 1 ( x ; α ) = α 0 +
+∑ L
+ℓ =1
+α ℓ x ℓ .
+• Add pairwise interactions: a factor’s effect can depend on another
+factor’s value.
+g I ( x ; α ) = g 1 ( x ; α ) +
+∑
+1 ≤ ℓ<m ≤ L
+α ℓm x ℓ x m .
+• Full quadratic model: square terms allow a factor’s effect to change
+with its own value and allows for curvature.
+g Q ( x ; α ) = g I ( x ; α ) +
+∑ L
+ℓ =1
+α ℓℓ x
+2
+ℓ .
+• All three metemodels are linear in the coeﬀicients , enabling tractable
+estimation .
+• The full quadratic model has p = ( L + 1)( L + 2) / 2 coeﬀicients ,
+including the intercept.
+
+PAGE 35
+4 RESPONSE SURF ACES AND METAMODELS 35
+Fitting a parametric metamodel by minimizing least-squares
+error
+Suppose that at design point x i = ( x i 1 , . . . , x iL ) , we observe the
+simulation estimate y i = Y R ( x i ) for i = 1 , . . . , D .
+1. Choose the form g ( x ; α ) , such as a full quadratic.
+2. Choose the coeﬀicients to minimize the sum of squared errors :
+ˆα = arg min
+α
+D
+∑
+i =1
+[ y i − g ( x i ; α )]
+2
+  
+sum of squared prediction errors at observed settings
+.
+3. Predict using the fitted function ˆg ( x ) = g ( x ; ˆα ) .
+
+PAGE 36
+4 RESPONSE SURF ACES AND METAMODELS 36
+How is the least-squares minimization solved?
+• Since the metamodels are linear in the coeﬀicients α , it can be
+expressed as g ( x ; α ) = ϕ ( x )
+T
+α , where
+ϕ ( x ) = ( ϕ 1 ( x ) , ϕ 2 ( x ) , . . . , ϕ p ( x ))
+T
+and α = ( α 1 , α 2 , . . . , α p )
+T
+.
+• Define a D × p matrix F := ( ϕ ( x 1 )
+T
+, ϕ ( x 2 )
+T
+, . . . , ϕ ( x D )
+T
+)
+T
+, with
+entry F ik := ϕ k ( x i ) for i = 1 , . . . , D and k = 1 , . . . , p .
+• Then, collecting the simulation estimates as y = ( y 1 , . . . , y D )
+T
+, the
+least-square-error minimization problem can be written as
+min
+α
+∥ y − F α ∥
+2
+2 .
+• The objective is a convex quadratic in α . Setting its gradient to zero
+gives the equations for a global minimum ˆα :
+F
+T
+F ˆα = F
+T
+y .
+• The least-square-error-minimizing ˆα can be obtained using matrix
+factorizations. For example, in NumPy: alpha_hat =
+np.linalg.lstsq(F, y, rcond=None)[0]
+
+PAGE 37
+4 RESPONSE SURF ACES AND METAMODELS 37
+Why build a metamodel after running the simulations?
+Simulation gives noisy observations at finitely many settings . A fitted
+metamodel extends those observations into a relationship we can use:
+• Predict untested settings. Estimate performance between observed
+points without running a new simulation for every trial setting.
+• Explain tradeoffs. Study how predicted performance changes when one
+or several decision levers change.
+• Performance optimization through mathematical programming. The
+metamodel g ( x ; ˆα ) can appear in the objective function or constraints.
+Caveat: A promising decision predicted by the metamodel still requires
+confirmation by simulation .
+
+PAGE 38
+4 RESPONSE SURF ACES AND METAMODELS 38
+Turn the fitted metamodel into an optimization model
+• Let x denote values of the controllable decision levers , and X the set
+of feasible values.
+• Let K ( x ) be cost of implementing x .
+• Let τ be an acceptable upper limit on service level , e.g., expected
+waiting time.
+Desired decision problem − → Metamodel approximation
+min
+x ∈X
+K ( x ) − → min
+x ∈X
+K ( x )
+θ ( x ) ≤ τ − → ˆg ( x ) ≤ τ
+• The true performance θ is unknown . The fitted metamodel ˆg ( x )
+serves as an approximation .
+• The optimizer returns a candidate for the real decision problem that
+needs to be further tested via simulations for feasibility and optimality.
+• Alternatively, minimize ˆg ( x ) subject to a cost budget K ( x ) ≤ B , where
+B is the available budget.
+
+PAGE 39
+4 RESPONSE SURF ACES AND METAMODELS 39
+Example: optimize the fitted staﬀing–speed model
+Reuse the illustrative fitted metamodel for waiting time:
+g ( c, v ) = 74 − 21 c − 50 v + 15 cv (minutes) .
+Set an waiting-time target of 8 minutes and allow continuous staﬀing c
+within the original feasible region [2 , 3] :
+min
+c,v
+K ( c, v ) = c + 5( v − 1)
+subject to 74 − 21 c − 50 v + 15 cv ≤ 8 ,
+2 ≤ c ≤ 3 , 1 . 0 ≤ v ≤ 1 . 2 .
+• K ( c, v ) is an assumed cost function : one extra server and a 20%
+speed increase has a cost of one unit.
+• Continuous c is a relaxation for this calculation; an actual server count
+must be integer.
+• While the product cv makes g bilinear and nonconvex in the decisions,
+this program can still be solved to global optimality .
+
+PAGE 40
+4 RESPONSE SURF ACES AND METAMODELS 40
+Solve the continuous problem by eliminating staﬀing
+1. For any speed v ∈ [1 , 1 . 2] , 21 − 15 v > 0 , so the waiting-time-target
+constraint becomes
+c ≥ c min ( v ) :=
+66 − 50 v
+21 − 15 v
+.
+Since the cost objective increases with c , choose c = c min ( v ) .
+2. Substitute this staﬀing choice into the cost function:
+K ( c min ( v ) , v ) =
+66 − 50 v
+21 − 15 v
++ 5( v − 1)
+=
+8
+3
++ ( v − 1)
+(
+5 −
+10
+21 − 15 v
+)
+≥
+8
+3
+.
+Here v − 1 ≥ 0 and 21 − 15 v ∈ [3 , 6] , so the bracket is positive.
+Equality holds at v = 1 .
+3. Thus the global optimum of the fitted, relaxed problem is
+( c
+⋆
+, v
+⋆
+) =
+(
+8
+3
+, 1
+)
+, K
+⋆
+=
+8
+3
+, g ( c
+⋆
+, v
+⋆
+) = 8 .
+In this example, extra staﬀing is preferable to extra speed .
+
+PAGE 41
+4 RESPONSE SURF ACES AND METAMODELS 41
+An exact four-point fit cannot reveal curvature
+• With only four design points (2 , 1) , (3 , 1) , (2 , 1 . 2) , (3 , 1 . 2) , the fitted
+metamodel
+g ( c, v ) = 74 − 21 c − 50 v + 15 cv (minutes) .
+fit these four points exactly, and the least-squares error is zero :
+4
+∑
+i =1
+[ y i − g ( c i , v i )]
+2
+= 0 .
+• However, g is linear in either lever when the other is fixed :
+Fixed v : g ( c, v ) = (74 − 50 v ) + ( − 21 + 15 v ) c,
+Fixed c : g ( c, v ) = (74 − 21 c ) + ( − 50 + 15 c ) v.
+• To detect curvature , increase from two to three levels of each lever .
+
+PAGE 42
+4 RESPONSE SURF ACES AND METAMODELS 42
+Test three staﬀing levels and three speed levels
+• Add staﬀing level c = 4 and speed level v = 1 . 1 ; test all 3
+2
+= 9
+combinations below.
+• Each simulation means is based on R = 60 independent runs.
+• Use CRN across decision settings for each run, totaling 9 R = 540 runs.
+Y R ( c, v ) (min) v = 1 . 0 v = 1 . 1 v = 1 . 2
+c = 2 0.9764 0.6058 0.4124
+c = 3 0.1243 0.0838 0.0589
+c = 4 0.0240 0.0154 0.0102
+• Consider fitting the following metamodel
+g Q ( c, v ; α ) = α 0 + α c c + α v v + α cv cv
++ α cc c
+2
++ α vv v
+2
+,
+where α cc c
+2
+permits curvature as staﬀing changes, and α vv v
+2
+permits
+curvature as speed changes.
+
+PAGE 43
+4 RESPONSE SURF ACES AND METAMODELS 43
+Refit with the more flexible full quadratic metamodel
+• Let y i = Y R ( c i , v i ) at the nine settings. Solving the least squares
+ˆα = arg min α
+∑
+9
+i =1
+[
+y i − g Q ( c i , v i ; α )
+] 2
+gives
+ˆg ( c, v ) = 12 . 981639 − 3 . 347330 c − 12 . 395420 v
++ 1 . 375540 cv + 0 . 251680 c
+2
++ 3 . 271187 v
+2
+.
+1.00 1.05 1.10 1.15 1.20
+Service speed multiplier v
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Mean waiting time (min)
+c=2: quadratic fit
+c=3: quadratic fit
+c=4: quadratic fit
+• Each line is a slice of ˆg ( c, v ) at fixed staﬀing c . Dots are Y R ( c, v ) ; the
+v
+2
+term allows each slice to bend .
+
+PAGE 44
+4 RESPONSE SURF ACES AND METAMODELS 44
+Validate at settings that were not used for fitting
+Keep ˆg fixed. Simulate R = 60 fresh replications at untested settings
+(3 , 1 . 05) and (3 , 1 . 15) .
+c v ˆg ( c, v ) Fresh mean 95% CI
+3 1.05 0.129 0.104 [0.096, 0.113]
+3 1.15 0.022 0.072 [0.066, 0.078]
+• ˆg ( c, v ) is not contained by the 95% CI , suggesting that the
+discrepancies between the metamodel and the simulation are not
+simulation noises .
+
+PAGE 45
+4 RESPONSE SURF ACES AND METAMODELS 45
+If validation fails, revise the experiment or metamodel
+Choose the remedy according to the source of disagreement:
+1. Imprecise simulation means. If simulation means have wide
+confidence intervals , increase independent replications . More precise
+simulation means can also improve the fitted coeﬀicients of
+metamodels.
+2. An inadequate metamodel form. If discrepancies persist with precise
+simulation means, add design points where predictions are poor or
+choose a more flexible form . For example, allow different speed curves
+at different staﬀing levels, then refit.
+
+PAGE 46
+4 RESPONSE SURF ACES AND METAMODELS 46
+Confirm a selected decision with independent simulations
+After using a metamodel to produce a decision , further independent
+simulations are required to confirm the decision’s performance .
+1. Fix a candidate x 1 obtained from the metamodel, the baseline x 0 ,
+performance target τ , and replication count.
+2. Estimate the candidate’s performance and its improvement relative
+to the baseline directly from the fresh simulation outputs:
+D
+conf
+r = Y
+conf
+r ( x 1 ) − Y
+conf
+r ( x 0 ) , ∆ = θ ( x 1 ) − θ ( x 0 ) .
+Check whether θ ( x 1 ) ≤ τ and whether ∆ < 0 , using the confidence
+intervals from Sections 1–2.
+
+PAGE 47
+4 RESPONSE SURF ACES AND METAMODELS 47
+Week 6 summary
+• Plan the experiment before simulation. Specify the improvement question,
+performance measure, decision levers with their levels, and run protocol.
+• CRN can improve comparison precision. Use matched random inputs across
+decision settings to reduce the impact of simulation noises.
+• Factorial designs separate effects and interactions. Main effects average over
+other levels; two- and three-factor interactions describe how conditional
+effects change.
+• Fit a metamodel by least squares. Choose a parametric form to approximate
+the response surface, and fit the parameters by least squares.
+• Validate metamodel predictions at untested settings. More replications
+reduce sampling error; persistent discrepancies call for additional design points
+or a better metamodel.
+• Use the metamodel for decision optimization. Express costs, performance
+targets, and feasibility using metamodels to formulate decision optimization
+problems.
+• Confirm the candidate decision independently. For the candidate decision,
+confirm performance and improvement over baseline using fresh simulations.

@@ -1,0 +1,4 @@
+policy,doctors,pharmacy,fixed
+2 doctors,2,1,"same inputs, priority3>2>1, FCFS pharmacy,200patients"
+3 doctors,3,1,"same inputs, priority3>2>1, FCFS pharmacy,200patients"
+4 doctors,4,1,"same inputs, priority3>2>1, FCFS pharmacy,200patients"

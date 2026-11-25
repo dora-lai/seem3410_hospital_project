@@ -1,0 +1,17 @@
+{
+  "report_pages_inspected": 7,
+  "slides_inspected": 8,
+  "layout_issues_remaining": 0,
+  "body_font_pt": 11,
+  "report_A4": true,
+  "report_margins_cm": 2.1,
+  "brief_words": 160,
+  "presentation_native_chart": true,
+  "presentation_native_tables": 4,
+  "PowerPoint_application_test": false,
+  "human_prose_review": "pending",
+  "inspected_artifacts": [
+    "submission/final_report.pdf",
+    "submission/presentation.pptx"
+  ]
+}

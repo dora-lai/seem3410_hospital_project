@@ -1,0 +1,594 @@
+
+PAGE 1
+1
+SEEM3410 System Modeling and
+Simulation
+Week 1: From Real Systems to Models,
+Evaluation, and Simulation
+W eiliang Liu
+Department of SEEM
+The Chinese University of Hong Kong
+2026–27 T erm 1
+
+PAGE 2
+WEEK 1 ROADMAP 2
+Week 1 Roadmap
+1 Why We Build Models
+2 Analytical Evaluation for Canonical Queueing Models
+3 Simulation Evaluation for Complex Models
+
+PAGE 3
+1 WHY WE BUILD MODELS 3
+1 Why We Build Models
+Motivating Question: How can we learn how a real system performs,
+and how decisions would change its performance?
+Local breakfast shop
+ Hospital operations
+ City digital twin
+Small system − → larger service network − → city-scale system
+System: a collection of interacting components that work together toward a goal.
+• How well does the system perform now ?
+• Where does bottleneck form, and which resource is constraining performance?
+• What would happen under a diﬀerent staﬃng, capacity, or layout decision ?
+
+PAGE 4
+1 WHY WE BUILD MODELS 4
+The approach we take in this course
+We build a model of a real system so that we can evaluate
+system performance and the impact of decisions .
+Real
+system
+= ⇒ Model = ⇒
+Evaluate
+performance
+and decision impact
+= ⇒
+Evidence
+for action
+Why building a model is helpful?
+• We usually cannot test every decision directly on the real system.
+• The model is the object we analyze or experiment on.
+• The model must be adequate for the decision, not merely detailed.
+• How we build the model is an art of abstraction.
+
+PAGE 5
+1 WHY WE BUILD MODELS 5
+Why we cannot test every decision in the real system?
+• A real intervention may be expensive, disruptive, slow, or unsafe.
+• Hard to hold operating conditions ﬁxed for a fair comparison.
+• Rare but important scenarios may not occur during a pilot.
+• Some alternatives do not yet exist physically.
+A model creates a controlled environment for asking:
+“If we change the decision, what performance would we expect?”
+
+PAGE 6
+1 WHY WE BUILD MODELS 6
+What do we mean by a “model”?
+A model is a purposeful abstraction of a real system: it retains the features
+needed for an intended use and omits the rest. It is not a complete copy of reality.
+A model makes explicit:
+• intended use — the decision and performance measures that the stakeholder
+cares about;
+• boundary — system scope (what is inside and outside) and time horizon
+(when the model begins and ends);
+• level of detail — which components, states, and events are represented
+individually or in aggregate;
+• mechanisms — relationships, rules, and causal processes governing
+interactions and state changes;
+• inputs and assumptions — the decision setting being evaluated, assumptions
+about how uncertainty is represented, and other simplifying assumptions.
+
+PAGE 7
+1 WHY WE BUILD MODELS 7
+A model connects decisions to performance
+System inputs
+Decision variables
+↘
+↗
+Model
+↗
+↘
+Performance measures
+Trade-oﬀs and risks
+• Performance question: what values of waiting, throughput,
+utilization, or service level does the model imply (output)?
+• Decision-impact question: how do those outputs change when
+staﬃng, capacity, scheduling, or routing decisions change?
+
+PAGE 8
+1 WHY WE BUILD MODELS 8
+Why can the same system have diﬀerent models?
+—The decision need acts as a modeling lens
+Real system
++
+Decision need
+− →
+Modeling lens
+(boundary, detail,
+mechanisms, uncertainty)
+− →
+Fit-for-purpose
+model
+• A model adequate for one decision may be inadequate for another.
+• Diﬀerent models of the same system are not contradictory when their
+purposes diﬀer.
+• Additional detail is useful only when it is relevant for the decision
+comparison.
+
+PAGE 9
+1 WHY WE BUILD MODELS 9
+Example: One emergency department (ED), three modeling
+choices
+Decision need What the model must retain Primary outputs
+Staﬀ triage nurses Arrivals by acuity, triage
+queue, nurse service capacity
+Triage wait, service
+level, utilization
+Manage beds and
+boarding
+Treatment spaces,
+admissions, ward-bed
+blocking
+Length of stay,
+boarding time,
+occupancy
+Plan for a demand
+surge
+Time-varying arrivals, staﬀ
+schedules, downstream
+capacity, disruption scenarios
+Delays, unmet
+demand, resilience
+The real ED is unchanged, but the decision need changes the scope,
+mechanisms, detail, and outputs of the model .
+
+PAGE 10
+1 WHY WE BUILD MODELS 10
+How do we design a ﬁt-for-purpose model?
+1. State the stakeholder’s decision and the alternatives to compare.
+2. Select the performance measures that matter.
+3. Draw a suitable system boundary that preserves the relevant
+eﬀects.
+4. Include mechanisms that are relevant to the comparison; abstract
+the rest.
+5. Clarify assumptions and limitations.
+Start from the purpose , rather than the desire to make the
+model detailed.
+
+PAGE 11
+1 WHY WE BUILD MODELS 11
+The focus of this course: service systems
+Examples include a breakfast shop, an emergency department, a call center,
+an airport checkpoint, and an urban mobility service.
+Despite their diﬀerent contexts, they share common operational structure :
+• customers (patients, passengers, calls, orders, or jobs) arrive over time;
+• servers provide service with limited capacity (can be non-human);
+• a queue forms when arriving customers must wait to be served;
+• the service process involves customers moving through one or more
+service stages under routing and priority rules;
+• uncertainty in customer arrivals, service times, and behavior;
+• performance is assessed through waiting time, queue length,
+throughput, server utilization, service levels, and costs.
+
+PAGE 12
+1 WHY WE BUILD MODELS 12
+Example: Emergency department as a service system
+Service process: Arrival → Registration → Triage → Waiting →
+Examination → Test/Treatment → Discharge or Admission
+Customers Walk-in and ambulance patients arrive over time; their
+acuity and arrival rates vary.
+Servers Registration staﬀ, triage nurses, physicians, treatment
+spaces, and ward beds.
+Queues Patients may wait for triage, examination, diagnostics,
+treatment spaces, or ward admission.
+Service stages After triage, critically ill patients bypass the queue for re-
+suscitation; stable patients may follow examination → di-
+agnostics/treatment → discharge or admission.
+Uncertainty Arrival times, acuity, service and test durations, clinical
+pathways, and downstream bed availability.
+Performance Time to triage and physician, length of stay, boarding time,
+throughput, service levels, and resource utilization.
+
+PAGE 13
+1 WHY WE BUILD MODELS 13
+From model to simulation (more details in later weeks)
+Key elements to think about when building a discrete-event
+simulation :
+Entity A customer, patient, call, bag, order, vehicle, or job
+Resource A server, clinician, bed, counter, gate, vehicle, or machine
+Queue A waiting population governed by a service discipline
+Process A sequence of service, delay, routing, and decision steps
+State The information needed to describe the system at a point
+in time (e.g., queue length)
+Event An instantaneous occurrence that may change the state
+(e.g., service completion, customer arrival)
+
+PAGE 14
+1 WHY WE BUILD MODELS 14
+Exercise: Map a familiar system
+Choose a service system you are familiar with, e.g., campus canteen,
+clinic, airport checkpoint, call center, parcel locker network.
+1. State one operational decision your model is intended to support.
+2. Draw the system boundary and the main process ﬂow .
+3. List entities, resources, queues, states , and events .
+4. Name two important sources of uncertainty .
+5. Propose one performance measure that ﬁts your model’s
+intended use.
+Be ready to explain one modeling choice that others might make
+diﬀerently.
+
+PAGE 15
+1 WHY WE BUILD MODELS 15
+Two ways to evaluate a model: Analytical vs. Simulation
+Analytical evaluation Simulation-based evaluation
+Best when: model has a
+compact mathematical
+representation.
+Best when: analysis is
+intractable or too restrictive.
+Method: derive closed-form
+performance measures
+Method: run repeated
+computational experiments.
+Strength: fast evaluation and
+transparent decision impact.
+Strength: ﬂexibility for
+system complexity.
+Example: an M/M/1 queue
+(to be learned).
+Example: a multi-stage
+emergency department.
+The two methods diﬀer in how the model’s outputs are obtained:
+mathematical derivation vs. computational experimentation .
+
+PAGE 16
+2 ANALYTICAL EV ALUATION FOR CANONICAL QUEUEING MODELS 16
+2 Analytical Evaluation for Canonical
+Queueing Models
+Queueing models capture the process ﬂow of many service systems and the
+congestion created when uncertain demand meets limited capacity .
+Arrivals − → Queue − → Service − → Departure / next stage
+A queueing model speciﬁes the elements governing this typical ﬂow:
+• arrival process : who arrives and what interarrival time distributions;
+• service process : the number of servers and service time distributions;
+• service discipline : service order within a queue (e.g., ﬁrst come ﬁrst
+serve), routing (send an arriving job to which server?), and scheduling
+(serve which job when a server gets idle?).
+Some canonical queueing models can be evaluated analytically .
+Kendall notation summarizes their main model assumptions.
+
+PAGE 17
+2 ANALYTICAL EV ALUATION FOR CANONICAL QUEUEING MODELS 17
+Kendall notation for canonical queueing models
+A/S/c/K/ Disc + P
+K
+  
+Arrivals → Queue → Service → Departures
+A Disc S, c
+↓
++ P
+Customer abandonment
+A Interarrival-time distribution K System capacity: num. of
+customers in service + in
+queue ≤ K
+S Service-time distribution Disc Service discipline, e.g., FCFS,
+LCFS, SIRO, or priority
+c Number of servers + P Patience-time distribution
+governing abandonment
+Distribution codes: M exponential, D deterministic, G general; + M exponential patience.
+
+PAGE 18
+2 ANALYTICAL EV ALUATION FOR CANONICAL QUEUEING MODELS 18
+Read the Kendall’s notation: A/S/c/K/ Disc + P
+—the short form A/S/c assumes inﬁnite capacity ( K = ∞ ), FCFS
+service discipline, and no abandonment.
+• M/M/ 1 : Poisson arrivals, exponential service times, one server.
+• M/M/c : Poisson arrivals, exponential service times, c servers.
+• M/M/c/c : c servers and no waiting room; arrivals that ﬁnd no
+server idle are lost.
+• M/M/ 1 + M : one server and exponential patience; customers
+may abandon.
+• G/G/ 1 : general interarrival and service distributions, one server.
+Usually, the assumption of Poisson arrivals and exponential service
+or patience times makes a model analytically tractable, due to its
+memoryless (Markovian) property.
+
+PAGE 19
+2 ANALYTICAL EV ALUATION FOR CANONICAL QUEUEING MODELS 19
+Core performance measures for queueing models
+L Mean number of customers in the system
+L q Mean number of customers waiting in queue
+W Mean time a customer spends in the system
+W q Mean waiting time before service
+λ Long-run eﬀective throughput rate
+ρ Utilization: fraction of time that a server is busy
+Service level Probability of meeting a target, such as
+P ( waiting time ≤ 5 min )
+As we will learn, many of these performance measures admit closed-form
+expressions for canonical queueing models.
+
+PAGE 20
+2 ANALYTICAL EV ALUATION FOR CANONICAL QUEUEING MODELS 20
+Little’s law: a universal analytical relationship
+L = λW
+• L : long-run average number of customers inside a deﬁned system.
+• λ : long-run eﬀective rate at which customers enter that system.
+• W : long-run average time an customer spends inside it.
+The three quantities must use the same system boundary and
+compatible time units .
+• Knowing any two of the three allows the third to be determined.
+• Very general and universal . It only requires stability of the
+queueing model, and does not require exponential distributions.
+• It is discovered by John Little, an American operations researcher
+(1928 - 2024)
+
+PAGE 21
+2 ANALYTICAL EV ALUATION FOR CANONICAL QUEUEING MODELS 21
+Little’s law applies at diﬀerent boundaries
+Boundary Identity Interpretation
+Whole system L = λW Num. of customers in system
+Waiting line L q = λW q Num. of customers in queue
+Servers L s = λ E [ S ] Num. customers in service
+• E [ S ] is the mean service time of customer;
+• W q is the mean time a customer spent waiting in queue;
+• W = E [ S ] + W q is the mean time a customer spent in the system
+(waiting plus service)
+• Hence, L = L q + L s .
+
+PAGE 22
+2 ANALYTICAL EV ALUATION FOR CANONICAL QUEUEING MODELS 22
+Little’s law: Exercise 1
+A campus clinic completes an average of 12 visits per hour. A patient
+spends 35 minutes in the clinic on average, including waiting and
+consultation.
+1. What is the average number of patients in the clinic?
+2. If the mean consultation time is 15 minutes, what is the mean
+waiting time?
+3. What is the average number of patients waiting?
+4. What is the average number of patients in consultation?
+Check your units before using a formula.
+
+PAGE 23
+2 ANALYTICAL EV ALUATION FOR CANONICAL QUEUEING MODELS 23
+Exercise 1 solution
+Convert 35 minutes of time-in-system to W = 35 / 60 hour. The mean
+service time is E [ S ] = 15 / 60 hour. The arrival rate is λ = 12 per hour.
+Num. in clinic: L = λW = 12
+(
+35
+60
+)
+= 7 ,
+Waiting time: W q = W − E [ S ] =
+35
+60
+hour −
+15
+60
+=
+1
+3
+hour ,
+Num. in queue waiting: L q = λW q = 12
+(
+1
+3
+)
+= 4 ,
+Num. in consultation: L s = λE [ S ] = 12
+(
+15
+60
+)
+= 3 .
+• On average, 7 patients are in the clinic: 4 waiting and 3 in
+consultation.
+
+PAGE 24
+2 ANALYTICAL EV ALUATION FOR CANONICAL QUEUEING MODELS 24
+Little’s law: Exercise 2
+An airport security checkpoint processes an average of 300 passengers
+per hour. On average, 75 passengers are inside the checkpoint area:
+20 are being screened and the rest are waiting.
+1. What is the average number of passengers waiting?
+2. What is the mean time a passenger spends in the checkpoint area?
+3. What is the mean waiting time before screening?
+4. What is the mean screening time?
+
+PAGE 25
+2 ANALYTICAL EV ALUATION FOR CANONICAL QUEUEING MODELS 25
+Exercise 2 solution
+The throughput is λ = 300 passengers per hour. For the whole
+checkpoint, L = 75 ; for the screening stations, L s = 20 ; hence,
+L q = 75 − 20 = 55 .
+Time in checkpoint: W =
+L
+λ
+=
+75
+300
+hour = 15 minutes ,
+Waiting time: W q =
+L q
+λ
+=
+55
+300
+hour = 11 minutes ,
+Screening time: E [ S ] =
+L s
+λ
+=
+20
+300
+hour = 4 minutes .
+• On average, a passenger spends 11 minutes waiting and 4 minutes
+being screened.
+
+PAGE 26
+2 ANALYTICAL EV ALUATION FOR CANONICAL QUEUEING MODELS 26
+Closed-form evaluation: M/M/ 1 queueing model
+—Poisson arrivals, exponential service times, one server
+For arrival rate λ , service rate µ , and ρ = λ/µ < 1 (this ensures stability ):
+Mean number in system
+L =
+ρ
+1 − ρ
+Mean number in queue
+L q =
+ρ
+2
+1 − ρ
+Mean time in system
+W =
+1
+µ − λ
+Mean waiting time in queue
+W q =
+ρ
+µ − λ
+• The formulas evaluate performance directly from the model parameters.
+• For example, changing a decision that changes service capacity, and
+hence µ , immediately reveals the predicted performance impact.
+
+PAGE 27
+2 ANALYTICAL EV ALUATION FOR CANONICAL QUEUEING MODELS 27
+Example: Using the model to evaluate a capacity decision
+Suppose λ = 8 customers/hour. Compare two service-capacity choices.
+Decision µ ρ = λ/µ W = 1 / ( µ − λ ) L = λW
+Current capacity 10/hour 0.80 0.50 hour 4.00
+Faster capacity 12/hour 0.67 0.25 hour 2.00
+• The analytical model predicts that raising service capacity from 10 to
+12 per hour halves mean time in system.
+• This is decision-impact evaluation : compare model outputs under
+alternative decisions.
+
+PAGE 28
+2 ANALYTICAL EV ALUATION FOR CANONICAL QUEUEING MODELS 28
+Insight from model: Congestion grows exponentially in server utilization
+For an M/M/ 1 queue, L = ρ/ (1 − ρ ) .
+ρ 0.50 0.70 0.80 0.90
+L 1.00 2.33 4.00 9.00
+• As utilization ρ approaches 1, congestion grows exponentially .
+• High server utilization makes arrival and service variability hard to
+obsorb , leading to long queues.
+• A service system often needs a capacity buﬀer to achieve a
+waiting-time target; merely matching arrival rate with service rate is not
+enough.
+
+PAGE 29
+3 SIMULATION EV ALUATION FOR COMPLEX MODELS 29
+3 Simulation Evaluation for Complex
+Models
+Closed-form evaluation works for simple service models, but more complex
+models may contain:
+• multiple stages, shared resources, feedback, and complex routing;
+• priorities, appointments, abandonment, and blocking;
+• time-varying arrival, correlated service times, and non-exponential
+empirical distributions;
+• service policies whose eﬀects cannot be isolated algebraically.
+Oftentime, complex models cannot be evaluated in closed-form,
+and simulation-based evaluation becomes necessary.
+
+PAGE 30
+3 SIMULATION EV ALUATION FOR COMPLEX MODELS 30
+Simulation evaluates a model through computational experimentation
+One simulation run:
+Simulation logic+ decision scenario + one realization of random inputs
+− → one possible system history and performance outputs
+• Specify a decision scenario and sample one realization of the stochastic
+inputs (e.g., customer arrival times, service times, and patience times).
+• Execute the simulation logic over a speciﬁed simulation time to
+generate a system history and its outputs.
+• Repeat simulation runs with new random-input realizations to estimate
+means and variability of outputs
+• Compare simulated outputs under diﬀerent decision scenarios to
+quantify decision impact.
+• Simulation requires repeated, statistically designed runs.
+
+PAGE 31
+3 SIMULATION EV ALUATION FOR COMPLEX MODELS 31
+Example: simulating an M/M/ 1 queue
+Simulation element M/M/ 1 model: Poisson arrivals at λ = 8 /hour
+and exponential service with rate µ
+Decision scenario Compare µ = 10 with µ = 12 customers/hour.
+Random inputs Sample independent A i ∼ Exp( λ ) and
+S i ∼ Exp( µ ) .
+Simulation logic Process arrivals and service completions, and
+update the queue and server state chronologically
+over a given simulation time.
+Outputs For each run, record W , W q , L , L q , and
+utilization; summarize estimates and uncertainty
+across runs.
+
+PAGE 32
+3 SIMULATION EV ALUATION FOR COMPLEX MODELS 32
+M/M/ 1 simulation: three runs versus analytical waiting time
+Conduct three simulation runs to obtain the mean customer waiting time (in
+minutes) for each run. Each run discards 20,000 warm-up customers and measures
+the next 100,000.
+Scenario Run 1 Run 2 Run 3 Sim. mean Analytical
+Current ( µ = 10 ) 24.09 24.74 22.88 23.90 24.00
+Faster ( µ = 12 ) 10.10 10.07 9.72 9.96 10.00
+Analytical benchmark: W q = ρ/ ( µ − λ ) , where ρ = λ/µ .
+• Runs diﬀer because they use diﬀerent realizations of the random arrival and
+service times.
+• The replication means are close to the benchmarks; more or longer runs
+reduce sampling uncertainty.
+Teaching code: mm1_discrete_event_simulation.py
+
+PAGE 33
+3 SIMULATION EV ALUATION FOR COMPLEX MODELS 33
+How analytical and simulation evaluation relate
+Space of models
+Simple models
+Analytical
+evaluation
+Complex models
+Simulation
+evaluation
+Tractability
+initially unclear
+Simulation is a
+go-to starting point
+• Analytical evaluation is what we hope for: it is fast, transparent, and
+insightful—but useful analytical results are often hard to obtain.
+• Discover patterns: simulated outputs can suggest identities or monotonicity
+that guides a mathematical proof for analytical evaluation.
+• Check formulas: after deriving an analytical result, compare it with simulation;
+disagreement reveals either a proof error or a simulation code error.
+• Simulation evaluation is the safety net: use it when analytical results are
+unavailable, and as a computational benchmark when they are available.
+
+PAGE 34
+3 SIMULATION EV ALUATION FOR COMPLEX MODELS 34
+Week 1 summary
+• Start with the decision. A model represents the parts of a real system needed
+to evaluate performance and decision impact.
+• Models are ﬁt for purpose. The decision need determines the model’s
+boundaries, mechanisms, inputs and assumptions, and outputs; the same
+system can therefore have diﬀerent models.
+• Service systems share a common structure. Customers arrive, move through
+service stages, wait for servers, and follow service rules.
+• Queueing models are canonical service-system models. Kendall notation
+describes their structure; key outputs include utilization, queue length, and
+waiting time.
+• Analytical evaluation is preferred when tractable. It is fast, transparent, and
+insightful; M/M/ 1 formulas reveal how congestion grows as utilization
+increases. Little’s law describes a universal relation between waiting time and
+queue length.
+• Simulation evaluation is the safety net for complex models. Repeated
+computational experiments estimate performance, reveal patterns, and provide
+benchmarks for checking formulas.
+
+PAGE 35
+3 SIMULATION EV ALUATION FOR COMPLEX MODELS 35
+Preparation for Week 2
+• review probability and exponential-distribution basics, as well as the
+steady-state probabilities of birth-death process
+a
+(we are going deeper
+into deriving close-formed formulas for canonical queueing models);
+• start to form a project team of 2–3 students.
+a
+https://en.wikipedia.org/wiki/Birth-death_process

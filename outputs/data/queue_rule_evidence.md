@@ -1,0 +1,1 @@
+Strict overtakes compare strictly different arrival and start times. Higher-class overtakes and zero same/lower-class overtakes support compatibility. They do not identify undocumented source code. Exact replay is an additional compatibility check, not hospital validation.

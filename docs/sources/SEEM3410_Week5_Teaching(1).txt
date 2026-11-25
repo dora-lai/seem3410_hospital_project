@@ -1,0 +1,1781 @@
+
+PAGE 1
+1
+SEEM3410 System Modeling and
+Simulation
+Week 5:
+Input Distribution Calibration from
+Empirical Data
+W eiliang Liu
+Department of SEEM
+The Chinese University of Hong Kong
+2026–27 T erm 1
+
+PAGE 2
+2
+How should we calibrate a simulation from data?
+Empirical
+data
+Input
+distributions
+Discrete-Event
+Simulation
+Output
+analysis
+This week Weeks 3–4
+Weeks 3–4: we took the input distributions as given.
+• Use given interarrival and service time distributions as inputs and
+implement the DES event loop.
+• Analyze simulation performance outputs by estimating mean values and
+constructing confidence intervals.
+This week’s motivating question:
+How do we calibrate the input distributions from empirical data?
+
+PAGE 3
+Week 5 Roadmap 3
+Week 5 Roadmap
+Prepare the historical data:
+1. Data scoping, cleaning, and exploration. Identify coverage, check quality,
+and explore groups and time variation through descriptive analysis.
+Estimate an input distribution:
+2. Moment-matching estimation. Match theoretical and empirical moments
+within a chosen family.
+3. Maximum likelihood estimation. Choose parameters that maximize the
+likelihood of the historical data.
+4. Nonparametric estimation. Use empirical distributions or smoothing.
+Assess and extend the estimated inputs:
+5. Accessing goodness of fit. Use K–S, A–D, and Chi-square tests to assess
+fitted distributions.
+6. Time-varying arrivals. Estimate rates by period; check homogeneity.
+7. Patience estimation and censoring. Handle incomplete records.
+
+PAGE 4
+1 DATA SCOPING, CLEANING, AND EXPLORATION 4
+1 Data Scoping, Cleaning, and
+Exploration
+Before estimating distributions, investigate what the data can tell us.
+1. Scope the available data. Identify which customers, operating periods,
+and operating processes are recorded. This determines which input
+distributions we can estimate.
+2. Clean and document. Check missing, invalid, zero, and rounded
+values. State filtering rules and identify censored measurements.
+3. Explore through descriptive analysis. Compare customer/server
+groups and clock-time periods or days. Look for differences suggesting
+multiclass or time-varying arrivls.
+
+PAGE 5
+1 DATA SCOPING, CLEANING, AND EXPLORATION 5
+Our running example: Dataset of AnonymousBank call center
+• Setting: an anonymized bank call center in Israel, with historical records
+from January–December 1999 .
+• Call types: regular banking, stock-exchange activity, Internet support, and
+information for prospective customers.
+• Operating process: the automated Voice Response Unit (VRU) operates
+24/7. Agent hours: Sun–Thu 07:00–24:00; weekend hours differ.
+Call arrives VRU Queue if needed Agent service
+Callers may also abandon (hang up) from the VRU or queue.
+• Records: one row per call, with 17 fields describing call type, timestamps,
+waiting, service, and outcome.
+Source: Technion SEE Lab; https://seelab.net.technion.ac.il/data/
+
+PAGE 6
+1 DATA SCOPING, CLEANING, AND EXPLORATION 6
+A snaptshot of the actual call records
+Our teaching focus: regular-banking calls, 7–11 November 1999.
+• Each row is one call record; 991107 means 7 November 1999
+• q_time=q_exit-q_start excludes VRU time.
+• q_time =0 means no queue visit.
+• AGENT : served by agent; HANG : hung up;
+
+PAGE 7
+1 DATA SCOPING, CLEANING, AND EXPLORATION 7
+Step 1 Data scoping: what does the available data cover?
+• Customers: recorded call types, including served and abandoned calls.
+• Periods: 7–11 November 1999 with detailed operating hours.
+• Processes: voice-response (VRU) arrival, queue waiting, and service durations.
+Available data Which input distribution can they inform?
+ser_time Service-duration distribution
+date , vru_entry Interarrival-time distribution
+q_time , outcome Patience-time distribution (censoring issue)
+• Let P i be patience time of customer i , and C i the wait this customer
+experiences. The patience-time observations are right-censored :
+Y i = min( P i , C i ) , δ i = 1 { P i < C i } .
+• The records with outcome = HANG only describes [ P | P < C ] , not the entire
+patience-time distribution. Tailored estimation methods are needed (more
+details later).
+
+PAGE 8
+1 DATA SCOPING, CLEANING, AND EXPLORATION 8
+Step 1 Data scoping (cont’d)
+• We focus on estimating service durations using the ser_time records during
+7–11 November 1999 for regular banking calls.
+Scoping rule Records remaining
+All November records 41,019
+Call-date 7–11 November; type regular banking 5,684
+Outcome AGENT : a service was recorded 4,915
+We have 4,915 candidate service records .
+Next, check whether their recorded durations are usable.
+
+PAGE 9
+1 DATA SCOPING, CLEANING, AND EXPLORATION 9
+Step 2: Data cleaning and documentation
+Start with the 4,915 candidate records:
+Cleaning rule Records remaining
+Remove 37 records with server=NO_SERVER 4,878
+Remove 7 zero ser_time values; target positive durations 4,871
+• Check for missing/invalid/duplicate fields: no missing fields or negative
+service durations in the scoped records; no duplicate retained rows.
+• Check timestamps: verify that ser_time = service_end - service_start,
+including all 3 cross-midnight services.
+• Recording precision: keep whole seconds.
+Result after cleaning: n = 4 , 871 positive historical service durations, in seconds.
+
+PAGE 10
+1 DATA SCOPING, CLEANING, AND EXPLORATION 10
+Step 2 in Python: implement the scoping and cleaning rules
+Teaching code: load_see_data.py , lines 73–81
+73 week_ps = [r for r in records
+74 if " 991107 " <= r[ " date " ] <= " 991111 "
+75 and r[ " type " ] == " PS " ]
+76 served = [r for r in week_ps if r[ " outcome " ] == " AGENT " ]
+77 actual_agent = [r for r in served
+78 if r[ " server " ] != " NO_SERVER " ]
+79 positive = [r for r in actual_agent
+80 if float (r[ " ser_time " ]) > 0]
+81 x = np.array([ float (r[ " ser_time " ]) for r in positive])
+• Lines 73–75: Filter by date and call type, where PS = regular banking.
+• Lines 76–78: Filter by whether actually being served by agents.
+• Lines 79-80: Filter by whether it is positve.
+• Line 81: Extract all eligble service durations as an array x for downstream task.
+
+PAGE 11
+1 DATA SCOPING, CLEANING, AND EXPLORATION 11
+Step 3 Descriptive analysis: Histogram and aggregate statistics
+0 1000 2000 3000
+Service duration (seconds)
+0
+500
+1000
+1500
+2000Number of calls
+Full observed range
+2 4 6 8
+Log(service duration in seconds)
+0
+100
+200
+300
+400
+500Number of calls
+Inspect on a log scale
+n Mean Median SD 99th percentile Maximum
+4,871 171.89 s 117 s 189.42 s 847 s 3,650 s
+• Original scale: Positive, right-skewed, with a long upper tail.
+• Log scale: approximately normal; suggest log-normal distribution as a good fit.
+
+PAGE 12
+1 DATA SCOPING, CLEANING, AND EXPLORATION 12
+Step 3 Descriptive analysis: Compare customer groups and time
+periods
+0 100 200 300 400 500
+Mean service duration (seconds)
+PS: Regular banking
+IN: Internet consulting
+NE: Stock exchange
+NW: Prospective customers
+171.9 s
+n=4,871
+421.2 s
+n=482
+263.4 s
+n=838
+101.1 s
+n=726
+Across four service categories
+Positive actual-agent services
+0 50 100 150 200 250
+Mean service duration (seconds)
+Before noon
+12:00–16:59
+17:00–23:59
+180.9 s
+n=1,647
+181.5 s
+n=1,737
+150.6 s
+n=1,487
+Within PS: service-start periods
+The 4,871-service fitting sample
+Both panels: recorded call dates 7–11 November 1999; outcome AGENT, actual agent, service duration > 0.
+The left panel compares four populations; the right divides only PS by service-start clock time. Source: T echnion SEE Lab.
+• Custome groups: the means range from about 101s to 421s; suggest that
+different customer classes need different service-duration distributions.
+• Time periods within PS: the mean also varies by service-start period, but
+with less variation.
+• These are only descriptive comparisons ; further analysis is needed to justify
+using separate distribution families and investigate their causes.
+
+PAGE 13
+1 DATA SCOPING, CLEANING, AND EXPLORATION 13
+Step 3 Descriptive analysis: let the comparisons guide the
+assumptions
+• Customer classes: if arrival patterns or service durations differ meaningfully
+across customer groups, use multiclass arrivals and class-specific interarrival
+and service time distributions in the simulation model.
+• Server segments: if service durations differ meaningfully across server groups
+(e.g., high vs low skill), use server-specific service distributions in the model.
+• Time variation: if arrival patterns or service durations differ meaningfully
+across time periods (e.g., peak vs off-peak hours, weekday vs weekend), use
+time-varying interarrival and service time distributions in the simulation
+model
+
+PAGE 14
+1 DATA SCOPING, CLEANING, AND EXPLORATION 14
+Step 3 Descriptive analysis: summarize the data with an
+empirical culmulative density function (CDF)
+For historical service durations s 1 , . . . , s n , define
+F n ( s ) =
+1
+n
+n
+∑
+i =1
+1 { s i ≤ s } .
+0 200 400 600 800 1000
+Service duration (seconds)
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Empirical CDF
+Empirical CDF (central-range zoom)
+• Empirical CDF allows us to read the fraction of durations at most s .
+• The curve jumps at recorded values; ties create larger jumps.
+• Empirical CDF is a non-parametric estimation of the input distribution.
+
+PAGE 15
+1 DATA SCOPING, CLEANING, AND EXPLORATION 15
+Nonparametric vs parametric estimation
+Nonparametric estimation Parametric estimation
+Approach Learn the shape from historical
+data, without fixing a
+distribution family.
+Choose a distribution family;
+estimate its few unknown
+parameters.
+Example Empirical CDF F n ( s ) from
+historical frequencies.
+Exponential: Estimate the rate
+µ ; Gamma: estimate shape k
+and scale b .
+Trade-off Flexible shape; rare-tail
+probabilities can have large
+relative error when few extreme
+records are available.
+A correct family can reduce
+estimation variance ; an
+incorrect family can introduce
+persistent bias .
+
+PAGE 16
+2 MOMENT MATCHING (MOM) 16
+2 Moment Matching (MOM)
+We begin with parametric estimation : after choosing a family,
+how can we use historical data to determine its parameters ?
+Moment matching equates a chosen distribution’s theoretical moments
+with the empirical moments of the historical data.
+1. Choose a distribution family. Its support (e.g., nonnegative) and
+shape (e.g., right-tailed) should be plausible for the input variable.
+2. Choose and compute empirical moments. In standard moment
+matching, use p moments for p unknown parameters , typically
+starting with the lowest orders: the mean, second moment, etc.
+3. Match theoretical and empirical moments. Solve the p
+moment-matching equations for the p unknown parameters.
+
+PAGE 17
+2 MOMENT MATCHING (MOM) 17
+Serval commonly-used positive-duration families
+All three candidates have nonnegative support s ≥ 0 .
+Family and
+parameters
+Theoretical moments:
+Mean; variance
+Rationale and limitation
+Exponential, rate
+µ > 0
+1 /µ ; 1 /µ
+2
+Simple baseline with analytical
+tractability, but not flexible .
+Gamma, shape
+k > 0 , scale b > 0
+kb ; kb
+2
+Flexible shape with separately
+controlled mean and variance.
+Lognormal,
+log-mean η ,
+log-SD τ > 0
+e
+η + τ
+2
+/ 2
+;
+( e
+τ
+2
+− 1) e
+2 η + τ
+2
+Suitable when log S is normal;
+accommodates pronounced right
+skew and a long tail.
+
+PAGE 18
+2 MOMENT MATCHING (MOM) 18
+How do the parameters change the density?
+0 1 2 3 4
+s (minutes)
+0.0
+0.5
+1.0
+1.5
+2.0
+Density (min−1)
+Vary the rate
+Exponential
+μ = 0.5 min−1
+μ = 1 min−1
+μ = 2 min−1
+0 1 2 3 4
+s (minutes)
+Mean = 1 min
+Gamma
+k = 1, b = 1 min
+k = 2, b = 0.5 min
+k = 5, b = 0.2 min
+0 1 2 3 4
+s (minutes)
+Mean = 1 min
+Lognormal
+η = −0.08, τ = 0.4
+η = −0.32, τ = 0.8
+η = −0.72, τ = 1.2
+f ( s ) = µe
+− µs
+f ( s ) =
+s
+k − 1
+e
+− s/b
+Γ( k ) b k
+f ( s ) =
+e
+− (log s − η )
+2
+/ (2 τ
+2
+)
+sτ
+√
+2 π
+• Exponential: decreasing µ stretches the curve, making the tail heavier and increasing the
+mean; the density is always decreasing, with SD equal to the mean .
+• Gamma: it generalizes exponential .
+– for integer k ≥ 1 , it is the sum of k independent exponential random varaibles ,
+each with rate 1 /b .
+– A larger k gives a more concentrated peak and less relative variability :
+SD( S )
+E [ S ]
+=
+√
+kb
+2
+kb
+=
+1
+√
+k
+.
+• Lognormal: larger τ produces stronger right skew and a heavier upper tail.
+
+PAGE 19
+2 MOMENT MATCHING (MOM) 19
+Hazard rate: how likely is service to finish next?
+Let S be service time (density f , CDF F ). Given that service is unfinished after s
+minutes, its hazard rate h ( s ) is the conditional completion rate per minute:
+h ( s ) =
+f ( s )
+1 − F ( s )
+, P ( S ≤ s + ∆ | S > s ) ≈ h ( s )∆ (∆ > 0 small ) .
+Distribution Hazard behavior as elapsed service time s increases
+Exponential Constant: h ( s ) = µ .
+Gamma k > 1 : increasing ; k = 1 : constant , h ( s ) = 1 /b ;
+0 < k < 1 : decreasing .
+Lognormal First increases, then decreases : one peak; tends to
+zero as s → 0
++
+and as s → ∞ .
+
+PAGE 20
+2 MOMENT MATCHING (MOM) 20
+Moment matching for Gamma
+• Suppose S ∼ Gamma( k, b ) . The first two theoretical moments are
+m 1 := E [ S ] = kb, m 2 := E [ S
+2
+] = Var[ S ] + E [ S ]
+2
+= kb
+2
++ k
+2
+b
+2
+• Let s 1 , . . . , s n be the n empirical observations. Then the first two
+empirical moments are
+ˆm 1 =
+1
+n
+∑
+i
+s i , ˆm 2 =
+1
+n
+∑
+i
+s
+2
+i
+• Moment matching solves the equation system :
+kb = ˆ m 1
+kb
+2
++ k
+2
+b
+2
+= ˆ m 2 ,
+yielding the following moment-matching estimates :
+ˆb MOM =
+ˆm 2 − ˆm
+2
+1
+ˆm 1
+, ˆk MOM =
+ˆm
+2
+1
+ˆm 2 − ˆm
+2
+1
+.
+
+PAGE 21
+2 MOMENT MATCHING (MOM) 21
+Moment-matching example
+Data point i 1 2 3 4 Total
+s i (minutes) 1 2 3 6 12
+s
+2
+i (minutes
+2
+) 1 4 9 36 50
+1. Compute the empirical moments
+ˆm 1 = 12 / 4 = 3 , ˆm 2 = 50 / 4 = 12 . 5 .
+2. Calculate the moment-matching estimates:
+ˆk MOM =
+ˆm
+2
+1
+ˆm 2 − ˆm
+2
+1
+= 2 . 571 , ˆb MOM =
+ˆm 2 − ˆm
+2
+1
+ˆm 1
+= 1 . 167 .
+
+PAGE 22
+2 MOMENT MATCHING (MOM) 22
+Python: match moments of the real service durations
+Teaching code: fit_inputs.py , lines 15–20
+15 m1_hat = np.mean(x)
+16 m2_hat = np.mean(np.square(x))
+17 exponential = stats.expon(loc=0, scale=m1_hat)
+18 k = m1_hat**2 / (m2_hat - m1_hat**2)
+19 b = (m2_hat - m1_hat**2) / m1_hat
+20 gamma = stats.gamma(a=k, loc=0, scale=b)
+• Lines 15–16: m1_hat and m2_hat are the empirical moments ˆm 1 and ˆm 2 .
+• Line 17 creates the exponential baseline with mean ˆm 1 (irrelevant to the
+Gamma estimation).
+• Lines 18–19 apply the moment-matching formulas using ˆm 2 − ˆm
+2
+1
+, giving
+ˆk MOM = 0 . 8236 and ˆb MOM = 208 . 70 s.
+• Line 20 initializes the Gamma distribution using the estimates; the initialized
+object supplies pdf , cdf , ppf , and rvs .
+
+PAGE 23
+2 MOMENT MATCHING (MOM) 23
+How quickly does moment matching become accurate?
+Suppose the n historical service durations are iid from Gamma( k, b ) , with k, b > 0 .
+• Consistency: ( ˆm 1 , ˆm 2 )
+p
+− → ( m 1 , m 2 ) . By the continuous mapping theorem ,
+ˆk MOM = f 1 ( ˆm 1 , ˆm 2 )
+p
+− → f 1 ( m 1 , m 2 ) = k,
+ˆb MOM = f 2 ( ˆm 1 , ˆm 2 )
+p
+− → f 2 ( m 1 , m 2 ) = b.
+• Asymptotic normality and convergence speed: let ϑ 0 be the ground-truth
+parameter of interest ( k or b ), and ˆϑ MOM the corresponding MOM estimate:
+√
+n ( ˆϑ MOM − ϑ 0 )
+d
+− → N (0 , V MOM ) .
+Here, V MOM is the asymptotic variance of the scaled error . This means that
+– confidence interval for ϑ 0 has width proportional to
+√
+V MOM /
+√
+n
+– ˆϑ MOM converges to ϑ 0 at a 1 /
+√
+n rate , which implies consistency.
+• Beyond gamma: the above results hold for many distribution families
+assuming iid data, finite variances of the empirical moments, and a locally
+unique, differentiable mapping from moments to parameters.
+Convergence in probability: X n
+p
+− → X means that, for every ϵ > 0 , P ( |X n − X | > ϵ ) → 0
+as n → ∞ . Here
+d
+− → denotes convergence in distribution.
+
+PAGE 24
+3 MAXIMUM LIKELIHOOD ESTIMATION (MLE) 24
+3 Maximum Likelihood Estimation
+(MLE)
+• While moment matching is transparent and computationally simple, it uses the
+historical data only through aggregate summaries about empirical moments.
+• MLE uses the entrie dataset by asking “Under which parameters would this
+entire observed dataset be most likely to be generated?”
+• MLE is usually the default method for parametric distribution fitting ,
+because it exploits most of the dataset and has optimal large-sample eﬀiciency.
+• Let f ( s ; ϑ ) be a candidate probability density , where ϑ denote the
+parameters to be estimated. For fixed historical data s 1 , . . . , s n , the
+likelihood of this data being generated is their joint density:
+L ( ϑ ; s 1 , . . . , s n ) =
+n
+∏
+i =1
+f ( s i ; ϑ ) .
+• MLE chooses the parameter values ϑ that maximize this likelihood:
+ˆϑ MLE = arg max
+ϑ
+L ( ϑ ; s 1 , . . . , s n ) .
+
+PAGE 25
+3 MAXIMUM LIKELIHOOD ESTIMATION (MLE) 25
+Why likelihood is the multiplication of probability densities?
+• For continuous data, P ( S = s i ) = 0 . For a small interval ∆ ,
+P ϑ ( S ∈ [ s i − ∆ / 2 , s i + ∆ / 2]) ≈ f ( s i ; ϑ )∆ .
+• Therefore, given historical data s 1 , . . . , s n ,
+P ϑ
+(
+sample i is around for all i = 1 , . . . , n
+)
+≈
+n
+∏
+i =1
+f ( s i ; ϑ )∆ = ∆
+n
+L ( ϑ ) ,
+where independence permits the product .
+• The common ∆
+n
+does not affect which ϑ maximizes it.
+• Instead of directly solving ˆϑ MLE = arg max ϑ L ( ϑ ) , we maximize the
+logarithm ℓ ( ϑ ) := log L ( ϑ ) which preserve the maximizer and turn
+products into sums :
+ˆϑ MLE = arg max
+ϑ
+ℓ ( ϑ ) = arg max
+ϑ
+∑
+i
+log f ( s i ; ϑ )
+
+PAGE 26
+3 MAXIMUM LIKELIHOOD ESTIMATION (MLE) 26
+MLE for exponential distribution
+For iid S i ∼ Exp( µ ) with rate µ > 0 , f ( s i ; µ ) = µe
+− s i µ
+. Therefore,
+ℓ ( µ ) =
+∑
+i
+log f ( s i ; µ ) = n log µ − µ
+∑
+i
+s i , ℓ
+′
+( µ ) =
+n
+µ
+−
+∑
+i
+s i .
+A maximizer of ℓ ( µ ) solves ℓ
+′
+( µ ) = 0 , so ˆµ MLE = n/
+∑
+i
+s i =
+1
+ˆm 1
+= ˆµ MOM .
+1. An MLE need not have a closed-form expression. Commonly use numerical
+solution approaches are:
+• Gradient ascent: repeatedly updates parameters ϑ in the gradient
+direction to increase the log-likelihood ℓ ( ϑ ) .
+• Newton’s method: MLE somethimes reduces to finding a root of ℓ
+′
+= 0 ,
+which can be done using Newton’s method.
+2. MLE need not coincide with moment matching (MOM). They coincide in
+this exponential example, but generally not.
+
+PAGE 27
+3 MAXIMUM LIKELIHOOD ESTIMATION (MLE) 27
+MLE for Gamma: numerical solution
+For iid S i ∼ Gamma( k, b ) with k, b > 0 , f ( s i ; k, b ) =
+s i
+k − 1
+e
+− s i /b
+Γ( k ) b k
+. Therefore,
+ℓ ( k, b ) =
+∑
+i
+log f ( s i ; k, b ) = ( k − 1)
+∑
+i
+log s i −
+∑
+i
+s i
+b
+− nk log b − n log Γ( k ) .
+A maximizer of ℓ ( k, b ) solves
+∂ℓ
+∂b
+=
+∂ℓ
+∂k
+= 0 , which does not have a closed form .
+1. A numerical solution is needed. For fixed k ,
+∂ℓ
+∂b
+=
+∑
+i
+s i
+b 2
+−
+nk
+b
+= 0 = ⇒ ˆb ( k ) =
+ˆm 1
+k
+.
+• Substitute b = ˆ m 1 /k into ℓ ( k, b ) and numerically maximize ℓ ( k, ˆm 1 /k )
+over k > 0 using gradient ascent .
+• Let ˆk MLE denote the numerical optimizer. Then set ˆb MLE = ˆ m 1 / ˆk MLE .
+2. MLE and MOM differ on the same AnonymousBank data:
+Shape ˆk Scale ˆb (seconds)
+MLE 1 . 5830 108 . 59
+MOM 0 . 8236 208 . 70
+
+PAGE 28
+3 MAXIMUM LIKELIHOOD ESTIMATION (MLE) 28
+MLE versus moment matching: same rate, different variance
+• Let ϑ 0 be the ground-truth parameter of interest ( k or b ), and ˆϑ MOM and
+ˆϑ MLE its MOM and MLE estimates based on n iid data samples. Then,
+√
+n ( ˆϑ MOM − ϑ 0 )
+d
+− → N (0 , V MOM ) ,
+√
+n ( ˆϑ MLE − ϑ 0 )
+d
+− → N (0 , V MLE ) .
+• MLE is asymptotic eﬀicient: It holds that V MLE ≤ V MOM , that is, MOM has
+at least as large an asymptotic variance.
+• Same 1 /
+√
+n rate: While the MLE can reduce the variance constant, both
+have 1 /
+√
+n standard-error rates.
+• For a one-parameter family , V MLE = 1 /I ( ϑ 0 ) , where
+I ( ϑ ) = E ϑ
+[ {
+∂
+∂ϑ
+log f ( S ; ϑ )
+} 2
+]
+is Fisher information per sample.
+• Fisher information measures the amount of information that an observable
+random variable S carries about an unknown parameter ϑ upon which the
+probability of S depends.
+• Its reciprocal 1 /I ( ϑ 0 ) is a lower bound for the asymptotic variance for all
+regular estimators, and the MLE attains this lower bound .
+
+PAGE 29
+3 MAXIMUM LIKELIHOOD ESTIMATION (MLE) 29
+Python implementation: compute the gamma MLE
+Teaching code: fit_inputs.py , lines 34–36
+34 elif family == " Gamma " :
+35 k, loc, b = stats.gamma.fit(x, floc=0, method= " MLE " )
+36 fitted = stats.gamma(a=k, loc=loc, scale=b)
+• Line 35 uses MLE. method="MLE" selects maximum likelihood (also the
+default), fitting the historical durations stored in the array x .
+• Why floc=0 ? It fixes the shift at zero. The fitting assumes S = floc + G ,
+with G ∼ Gamma( k, b ) . The lower endpoint is floc ; the mean is floc + kb .
+• Line 36: Line 36 initializes the Gamma distribution using the estimates; the
+initialized object supplies pdf , cdf , ppf , and rvs .
+
+PAGE 30
+3 MAXIMUM LIKELIHOOD ESTIMATION (MLE) 30
+Python implementation for lognormal MLE
+For iid service durations with log S ∼ N ( η, τ
+2
+) , pass the original durations x in
+seconds directly to SciPy.
+Teaching code: fit_inputs.py , lines 37–39
+37 elif family == " Lognormal " :
+38 sigma, loc, scale = stats.lognorm.fit(x, floc=0, method= " MLE " )
+39 fitted = stats.lognorm(s=sigma, loc=loc, scale=scale)
+• Line 38 fits by MLE. floc=0 fixes the shift at zero.
+• Return values: (sigma, loc, scale) is approximately (0.8108, 0,
+121.37) . Here sigma = ˆτ is the SD of log S , and scale = e ˆη
+is the fitted
+median in seconds.
+• Line 39 initializes the lognormal distribution using the estimates; the
+initialized object supplies pdf , cdf , ppf , and rvs .
+
+PAGE 31
+3 MAXIMUM LIKELIHOOD ESTIMATION (MLE) 31
+Different fitting methods on the same AnonymousBank data
+Family / estimate Mean (s) E [ S
+2
+] (s
+2
+) 99th percentile (s)
+Exponential MLE (= MOM) 171.89 59,093 792
+Gamma MOM 171.89 65,420 874
+Gamma MLE 171.89 48,212 634
+Lognormal MLE 168.60 54,855 800
+Empirical sample 171.89 65,420 847
+• Gamma MOM matches the first two empirical moments the best.
+• Gamma MLE instead increases the log-likelihood from − 30 , 194 . 45 (MOM) to
+− 29 , 669 . 35 .
+• Preview (Section 5): Which fit should we choose? Goodness-of-fit tests
+compare fitted and empirical distributions quantitatively.
+
+PAGE 32
+4 NONPARAMETRIC INPUT DISTRIBUTIONS 32
+4 Nonparametric Input Distributions
+• Parametric approaches fix a distribution family before estimation. Could we
+use historical data s 1 , s 2 , . . . , s n without choosing such a family?
+• Use the empirical CDF itself as the input distribution:
+F n ( s ) =
+1
+n
+n
+∑
+i =1
+1 { s i ≤ s } , P ( S
+∗
+= s ) =
+# { i : s i = s }
+n
+,
+which gives each data point probability 1 /n , and repeated values receive their
+combined frequency.
+• To generate S
+∗
+, choose an index I uniformly from 1 , . . . , n and return s I .
+• Under this approach, sampled data can take only finite values from the
+historical dataset. This might be undesirable when the dataset is limited ,
+because many extreme values are not recorded in the dataset.
+
+PAGE 33
+4 NONPARAMETRIC INPUT DISTRIBUTIONS 33
+Python implementation: resample historical service durations
+Teaching code: nonparametric_and_patience.py , lines 27–30
+27 service_rng = np.random.default_rng(seed)
+28
+29 def draw_service(service_rng):
+30 return float (service_rng.choice(x)) / 60
+• Initialize once: service_rng is the random-number generator used
+throughout the simulation run.
+• The array x contains the 4,871 historical service durations in seconds .
+• Define the sampler: service_rng.choice(x) selects one historical record
+from x with equal probability. Dividing by 60 returns a duration in minutes .
+• Call when service starts: draw_service(service_rng) returns one new
+duration.
+
+PAGE 34
+4 NONPARAMETRIC INPUT DISTRIBUTIONS 34
+Nonparametric CDF estimation also has an n
+− 1 / 2
+rate
+• Let F 0 be the ground-truth CDF that generates n iid historical data samples,
+and let F n be the empirical CDF.
+• The Dvoretzky–Kiefer–Wolfowitz–Massart inequality states
+P
+(
+sup
+s
+|F n ( s ) − F 0 ( s ) | > ϵ
+)
+≤ 2 e
+− 2 nϵ
+2
+, ϵ > 0 .
+Thus, for ϵ =
+√
+log(2 /α ) / (2 n ) ,
+P
+(
+sup
+s
+|F n ( s ) − F 0 ( s ) | >
+√
+log(2 /α ) / (2 n )
+)
+≤ α,
+and so the largest CDF error also decays at rate n
+− 1 / 2
+.
+
+PAGE 35
+4 NONPARAMETRIC INPUT DISTRIBUTIONS 35
+Parametric or nonparametric: what changes?
+A correct family can improve precision; a wrong family can remain far off.
+Question Parametric family Empirical distribution
+Tail Can take continuous values
+that exceed observed
+maximum.
+Discrete and cannot exceed
+the sample maximum.
+Precision MLE can lower sampling
+variance if the family is
+correct.
+Flexible CDF estimate with
+no parametric assumption.
+Let F 0 be the true CDF. If a parametric fit converges to a wrong CDF F ϑ ∗ as data
+sample size increases,
+F
+ˆϑ
+( s ) − F 0 ( s ) = F
+ˆϑ
+( s ) − F ϑ ∗ ( s )
+  
+sampling error shrinks
++ F ϑ ∗ ( s ) − F 0 ( s )
+  
+family error remains
+.
+More data cannot repair a wrong family.
+
+PAGE 36
+5 ACCESSING GOODNESS OF FIT 36
+5 Accessing goodness of fit
+• We have discussed several parametric and nonparametric estimation
+methods . To quantify how well the estimated distributions fit the historical
+data, we use goodness-of-fit tests .
+• A discrepancy between the estimated distribution and the historical data is
+inevitable because there is sampling variation on the finite historical data.
+• Goodness-of-fit tests ask: Is the observed discrepancy larger than data
+sampling variation would explain? If “yes”, then the estimated distribution is
+not a good fit.
+Three commonly used goodness-of-fit tests:
+1. Kolmogorov–Smirnov (K–S) test: find the largest discrepancy between the
+empirical and estimated CDFs.
+2. Anderson–Darling (A–D) test: accumulate CDF discrepancies , giving more
+weight to the tails.
+3. Chi-square test: compare discrepancies in historical and expected counts
+over given intervals.
+
+PAGE 37
+5 ACCESSING GOODNESS OF FIT 37
+General procedure of goodness-of-fit tests
+• Let F be the ground-truth CDF that generates the historical data s 1 , . . . , s n .
+• Fit a distribution family { F ϑ : ϑ ∈ Θ } to the data, obtaining F
+ˆϑ
+, where ˆϑ is
+the estimated parameters.
+A goodness-of-fit test compares the historical data with F
+ˆϑ
+to examine
+H 0 : F = F ϑ ⋆ for some ϑ
+⋆
+∈ Θ , H 1 : F is outside this family .
+• Specifically, a goodness-of-fit test computes an observed statistic ˆT that
+summarizes the disagreement between the observed data s 1 , . . . , s n and F
+ˆϑ
+.
+• Let T denote the statistic computed from the same procedure , but from a
+new iid sample of size n generated from F , and so T is a randome variable.
+• Assume that H 0 is true. We use F
+ˆϑ
+to approximte F because ˆϑ
+d
+− → ϑ
+⋆
+under
+H 0 . Then, we bootstrap from F
+ˆϑ
+to estimate the distribution of T .
+• If Pr( T ≥ ˆT ) is too small , say, less than α = 0 . 05 , then we have suﬀicient
+evidence that H 0 does not hold and thus should be rejected.
+• We call Pr( T ≥ ˆT ) the p -value and α the significance level ; α is also the
+false-rejection probability that we reject H 0 while it is actually true.
+• Different goodness-of-fit tests use different constructions of the statistic ˆT .
+
+PAGE 38
+5 ACCESSING GOODNESS OF FIT 38
+Goodness-of-fit testing: the process
+Question: Is the observed discrepancy unusually large if the family is correct?
+Historical data
+s 1 , . . . , s n
+Fit chosen family
+F
+ˆϑ
+Observed discrep-
+ancy statistics
+ˆT
+Bootstrap: repeat for r = 1 , . . . , B
+Simulate new data
+s
+( r )
+1
+, . . . , s
+( r )
+n
+from F
+ˆϑ
+Refit using same
+fitting method
+F
+ˆϑ ( r )
+Recompute dis-
+crepancy statistics
+ˆT
+( r )
+Compare observed and bootstrap discrepancies
+How often is ˆT
+( r )
+≥ ˆT ? = ⇒ Estimated p -value ˆp
+Reject H 0 if ˆp ≤ α (e.g., α = 0 . 05 ). Otherwise, do not reject.
+
+PAGE 39
+5 ACCESSING GOODNESS OF FIT 39
+Bootstrap: estimate the distribution of T
+Under H 0 , use F
+ˆϑ
+as a substitute for the ground-truth F because ˆϑ
+d
+− → ϑ
+⋆
+.
+1. Re-sample: draw a new iid sample s
+( r )
+1
+, . . . , s
+( r )
+n from F
+ˆϑ
+, with the same size
+n as the historical data.
+2. Re-fit: estimate ˆϑ
+( r )
+from this simulated sample using the same fitting
+method for estimaing ˆϑ .
+3. Re-compute: compute the statistic ˆT
+( r )
+based on s
+( r )
+1
+, . . . , s
+( r )
+n and F
+ˆϑ ( r )
+using the same procedure to compute ˆT .
+4. Repeat: for r = 1 , . . . , B , obtain ˆT
+(1)
+, . . . , ˆT
+( B )
+.
+Their empirical CDF approximates the distribution of T , giving the estimated
+p -value :
+ˆG B ( t ) =
+1
+B
+∑
+B
+r =1
+1 { ˆT
+( r )
+≤ t } ,
+Pr( T ≥ ˆT ) ≈ ˆp =
+1+
+∑
+B
+r =1
+1 { ˆT
+( r )
+≥ ˆT }
+B +1
+,
+where the “+1” is a standard Monte Carlo correction used by SciPy.
+Reject H 0 if ˆp ≤ α , equivalently if ˆT > ˆc 1 − α .
+The cutoff ˆc 0 . 95 is the ⌈ ( B + 1)(1 − α ) ⌉ th smallest value among ˆT
+(1)
+, . . . , ˆT
+( B )
+.
+
+PAGE 40
+5 ACCESSING GOODNESS OF FIT 40
+Bootstrap in Python: fit, simulate, refit
+Teaching code: goodness_of_fit.py (abridged)
+64 def bootstrap_test(x, family, statistic, B=999, seed=341051):
+65 rng = np.random.default_rng(seed)
+66 fitted = mle_fit(x, family)
+67 observed = statistic(x, fitted)
+68 null = np.empty(B)
+69 for b in range (B):
+70 sample = fitted.rvs(size= len (x), random_state=rng)
+71 refitted = mle_fit(sample, family)
+72 null[b] = statistic(sample, refitted)
+73 exceedances = np.count_nonzero(null >= observed)
+74 pvalue = (1 + exceedances) / (B + 1)
+75 rank = int (np.ceil(.95 * (B + 1)))
+76 critical95 = np.sort(null)[rank - 1] if rank <= B else np.inf
+Code and notation: in the loop, r = b + 1 ; here α = 0 . 05 .
+Python Quantity Python Quantity
+observed ˆT fitted F
+ˆϑ
+sample s
+( r )
+= ( s
+( r )
+1
+, . . . , s
+( r )
+n ) refitted F
+ˆϑ ( r )
+null[b] ˆT
+( r )
+pvalue ˆp
+critical95 ˆc 1 − α rank ⌈ (1 − α )( B + 1) ⌉
+
+PAGE 41
+5 ACCESSING GOODNESS OF FIT 41
+K–S test: measure the largest CDF gap
+Let F n ( s ) = n
+− 1
+∑
+i
+1 { s i ≤ s } denote the empirical CDF. The K–S test
+uses the following statistic:
+ˆT := sup
+s
+⏐
+⏐ F n ( s ) − F
+ˆϑ
+( s )
+⏐
+⏐ .
+• This statistic gives the largest discrepancy between the empirical and
+estimated CDF.
+• Computationally, sort the samples and let s (1) ≤ · · · ≤ s ( n ) denote the
+ordered samples. Define u i = F
+ˆϑ
+( s ( i ) ) :
+ˆT = max
+1 ≤ i ≤ n
+{
+i
+n
+− u i , u i −
+i − 1
+n
+}
+.
+
+PAGE 42
+5 ACCESSING GOODNESS OF FIT 42
+K–S in Python: compute the largest CDF gap
+Teaching code: goodness_of_fit.py
+30 def ks_statistic(x, fitted):
+31 ordered = np.sort(x)
+32 n = len (x)
+33 cdf = fitted.cdf(ordered)
+34 right = np.arange(1, n + 1) / n
+35 left = np.arange(n) / n
+36 return max (np. max (right - cdf), np. max (cdf - left))
+500 result = bootstrap_test(x, " Gamma " , ks_statistic,
+501 B=999, seed=341051)
+• Line 33: cdf contains u i = F
+ˆϑ
+( s ( i ) ) at the sorted durations.
+• Lines 34-35: right and left contain i/n and ( i − 1) /n .
+• Line 36: The return statement takes the largest gap on either side of each
+empirical-CDF jump.
+• Line 500: Pass ks_statistic to the shared bootstrap function.
+
+PAGE 43
+5 ACCESSING GOODNESS OF FIT 43
+K–S Python output on the AnonymousBank data
+0 200 400 600 800 1000
+Service duration (seconds)
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Cumulative probability
+̂
+T = 0.0861
+Display zoom: 0-1,000 s
+Statistic uses all 4,871 records
+KS: historical and fitted CDFs
+Historical CDF
+Fitted gamma CDF
+110 120 130 140 150 160 170 180 190
+Service duration (seconds)
+0.4
+0.5
+0.6
+0.7
+0.8Cumulative probability
+Historical CDF = 0.6175
+Fitted CDF = 0.5315
+̂
+T = 0.0861
+Zoom: largest gap at 147 seconds
+• Both panels show the original data and the same fitted gamma CDF; the right
+panel zooms in on the largest gap at 147 seconds.
+• ˆT = 0 . 0861 > 0 . 0131 = ˆc 0 . 95 . The bootstrap p -value is 0 . 00100 < 0 . 05 :
+reject H 0 .
+
+PAGE 44
+5 ACCESSING GOODNESS OF FIT 44
+A–D test: give more weight to tail discrepancies
+Instead of taking the largest CDF gap, Anderson–Darling accumulates
+squared gaps with extra weight in the tails:
+ˆT := n
+∫
+[ F n ( s ) − F
+ˆϑ
+( s )]
+2
+F
+ˆϑ
+( s )[1 − F
+ˆϑ
+( s )]
+dF
+ˆϑ
+( s ) .
+• The weight 1 / [ u (1 − u )] , where u = F
+ˆϑ
+( s ) , is large near 0 and 1: both
+tails receive extra attention .
+
+PAGE 45
+5 ACCESSING GOODNESS OF FIT 45
+A–D in Python: derive the ordered-data formula
+Sort the samples s (1) ≤ · · · ≤ s ( n ) . Set u i = F
+ˆϑ
+( s ( i ) ) , u 0 = 0 , and u n +1 = 1 .
+After changing variables to u = F
+ˆϑ
+( s ) , the empirical CDF is i/n on [ u i , u i +1 ) :
+ˆT = n
+∑
+n
+i =0
+∫
+u i +1
+u i
+( i/n − u )
+2
+u (1 − u )
+du
+= n
+∑
+n
+i =0
+[
+( i/n )
+2
+log u − (1 − i/n )
+2
+log(1 − u ) − u
+] u i +1
+u i
+= − n −
+1
+n
+∑
+n
+i =1
+[
+(2 i − 1) log u i + (2 n − 2 i + 1) log(1 − u i )
+]
+= − n −
+1
+n
+∑
+n
+i =1
+(2 i − 1)
+[
+log u i + log(1 − u n +1 − i )
+]
+.
+Teaching code: goodness_of_fit.py
+41 def ad_statistic(x, fitted):
+42 ordered = np.sort(x)
+43 n = len (x)
+44 i = np.arange(1, n + 1)
+45 log_lower = fitted.logcdf(ordered)
+46 log_upper = fitted.logsf(ordered[::-1])
+47 return -n - np. sum ((2 * i - 1) * (log_lower + log_upper)) / n
+509 result = bootstrap_test(x, " Gamma " , ad_statistic,
+510 B=999, seed=341052)
+
+PAGE 46
+5 ACCESSING GOODNESS OF FIT 46
+A–D Python output on the AnonymousBank data
+0.0 0.2 0.4 0.6 0.8 1.0
+Fitted percentile u = F ̂ϑ(s)
+0
+50
+100
+150
+200
+250
+300n[Fn(s) − u]2/[u(1 − u)]
+Lower
+tail
+Upper
+tail
+Weight 1/[u(1 − u)] rises in both tails
+Display: 0.001 ≤ u ≤ 0.999; statistic uses all records
+AD: squared CDF gap, with tail weight
+0 500 1000 1500 2000 2500 3000 3500
+Service duration (seconds)
+10−3
+10−2
+10−1
+100
+Survival probability P(S > s)
+All 4,871 historical durations
+Log scale; zero survival is not shown
+Original service durations: upper tail
+Historical survival
+Fitted gamma survival
+• The left panel shows weighted squared gaps; the right compares historical and
+fitted upper-tail probabilities.
+• ˆT = 68 . 471 > 0 . 757 = ˆc 0 . 95 . The bootstrap p -value is 0 . 00100 < 0 . 05 : reject
+H 0 .
+
+PAGE 47
+5 ACCESSING GOODNESS OF FIT 47
+Chi-square test: compare counts in given bins
+Partition the entire support of the distribution into J fixed bins
+B 1 , B 2 , . . . , B J , e.g.,
+[0 , 30) , [30 , 60) , [60 , 120) , [120 , 240) , [240 , 480) , [480 , ∞ ) .
+Define
+O j = # { i : s i ∈ B j } , E j = nP
+ˆϑ
+( S ∈ B j ) , ˆT :=
+J
+∑
+j =1
+( O j − E j )
+2
+E j
+.
+• O j is the historical count and E j the expected count of the fitted
+distribution .
+• ˆT is the sum of squared discrepancies scaled by E j .
+
+PAGE 48
+5 ACCESSING GOODNESS OF FIT 48
+Chi-square in Python: historical and expected counts
+Teaching code: goodness_of_fit.py
+52 def chi_square_statistic(x, fitted):
+53 edges = np.array([0, 30, 60, 120, 240, 480, np.inf])
+54 observed, _ = np.histogram(x, bins=edges)
+55 expected = len (x) * np.diff(fitted.cdf(edges))
+56 return np. sum ((observed - expected)**2 / expected)
+518 result = bootstrap_test(x, " Gamma " , chi_square_statistic,
+519 B=999, seed=341053)
+• Line 54: np.histogram gives the empirical counts in the bins.
+• Line 55: np.diff(fitted.cdf(edges)) subtracts neighboring CDF values to
+obtain bin probabilities of the fitted distribution , i.e., P
+ˆϑ
+( S ∈ B j ) ;
+multiplying by n = len(x) gives expected counts.
+• Line 56: The return statement sums ( O j − E j )
+2
+/E j .
+• Line 518: Line Pass this statistic to the shared bootstrap function.
+
+PAGE 49
+5 ACCESSING GOODNESS OF FIT 49
+Chi-square Python output on the AnonymousBank data
+[0,30) [30,60) [60,120) [120,240) [240,480) [480,∞)
+Fixed service-duration bins (seconds)
+0
+250
+500
+750
+1000
+1250
+1500
+1750
+2000Number of calls
+Six bins cover [0, ∞)
+Minimum expected = 175.4
+Chi-square: historical vs. expected counts
+Historical count
+Gamma expected count
+[0,30) [30,60) [60,120) [120,240) [240,480) [480,∞)
+Fixed service-duration bins (seconds)
+0
+25
+50
+75
+100
+125
+150
+175
+Contribution (Oj − Ej)2/Ej
+134.2
+36.9
+146.5
+10.2
+79.0
+29.2
+Sum: ̂
+T = 436.100
+Which duration bins contribute most?
+• The left panel compares historical and expected counts.
+• The right panel shows each bin’s discrepancy ( O j − E j )
+2
+/E j . Their sum is ˆT .
+• ˆT = 436 . 100 > 7 . 860 = ˆc 0 . 95 . The bootstrap p -value is 0 . 00100 < 0 . 05 :
+reject H 0 .
+
+PAGE 50
+5 ACCESSING GOODNESS OF FIT 50
+Three goodness-of-fit tests on the three MLE estimates
+• Use MLE to fit exponential, Gamma, and lognormal distributions to the
+AnonymousBank data.
+• Use K–S (largest CDF gap), A–D (accumulated, tail-weighted CDF gaps),
+and Chi-square (total gaps in chosen bins) tests to examine each distribution.
+MLE family K–S: ˆT / cutoff A–D: ˆT / cutoff Chi-square: ˆT / cutoff
+Exponential 0 . 1372 / 0 . 0156 155 . 518 / 1 . 340 920 . 704 / 9 . 348
+Gamma 0 . 0861 / 0 . 0131 68 . 471 / 0 . 757 436 . 100 / 7 . 860
+Lognormal 0 . 0244 / 0 . 0129 4 . 290 / 0 . 759 29 . 219 / 7 . 692
+• Each cell reports ˆT / bootstrap 5% cutoff, using B = 999 .
+• Every statistic exceeds its own cutoff .
+• Lognormal gives a relatively closer fit , but still fails the test.
+• A closer inspection into the CDF figures is needed to understand where and
+how much the distributions disagree.
+
+PAGE 51
+5 ACCESSING GOODNESS OF FIT 51
+Why might a distribution fit poorly?
+Possible reasons for the poor fits include:
+• An unsuitable distribution family. The chosen family may miss the shape or
+upper tail of service durations.
+• Time-varying service patterns. Service durations may differ across times of
+day, days, or shifts.
+• Different server–customer-type pairs. Service durations may differ across
+combinations of server type and customer type.
+Data pooling can hide this heterogeneity: the pooled distribution is a mixture of
+the segment distributions , which need not belong to a single distribution family.
+A possible remedy: unpool the historical data.
+• Segment the data by time period, server type, and customer type (or their
+combinations).
+• Estimate and assess a separate distribution within each segment.
+• Keep enough records in each segment for reliable estimation.
+Next: demonstrate segmentation using arrivals.
+Estimate a separate arrival rate for each time period.
+
+PAGE 52
+6 TIME-V ARYING ARRIV ALS 52
+6 Time-Varying Arrivals
+• Earlier, we generated interarrival times using a constant arrival rate λ , which
+measures the expected number of arrivals per unit of time .
+• This assumes the same arrival pattern throughout the run.
+• If demand changes over the day, a single rate averaging busy and quiet
+periods together loses when the demand occurs .
+Apply the segmentation idea from Section 5:
+divide the day into time periods and estimate an arrival rate for each.
+Our progression: define time bins → count historical arrivals → estimate
+bin-specific rates → check for time homogeneit within each bin → generate
+simulation inputs.
+
+PAGE 53
+6 TIME-V ARYING ARRIV ALS 53
+Piecewise-constant Poisson process
+• We can approximate a time-varying arrival process using a piecewise-constant
+nonhomogeneous Poisson process .
+• Partition the operating day into bins I j = [ a j , b j ) , with duration
+∆ j = b j − a j minutes.
+• Assume that the arrivals in bin j follows a Poisson process with rate λ j .
+• That is, the arrival count C j in bin j satisfies
+C j ∼ Poisson( λ j ∆ j ) , E [ C j ] = λ j ∆ j ,
+and counts in disjoint time intervals are independent .
+Time
+08:00 09:00 10:00 11:00
+λ 1
+λ 2
+λ 3
+
+PAGE 54
+6 TIME-V ARYING ARRIV ALS 54
+Demonstration on the AnonymousBank Data
+Data scope: PS calls arriving at the VRU, 7–11 November 1999.
+1. Combine the five dates. Retain arrivals between 08:00 and 20:00 on each
+date: 4,599 arrivals in total, excluding virtual PHANTOM calls.
+2. Group by the clock hour of vru_entry . Form twelve bins : I 1 = 08:00–09:00,
+I 2 = 09:00–10:00, . . . , I 12 = 19:00–20:00. Each bin combines the same clock
+hour across all five dates .
+3. Count the arrivals in each bin. Write the combined count as C j . For example,
+the 09:00–10:00 bin contains C j = 510 arrivals across 7–11 November.
+• Each one-hour bin contains five recorded hours , corresponding to
+5 × 60 = 300 minutes of historical data.
+
+PAGE 55
+6 TIME-V ARYING ARRIV ALS 55
+Estimate each hourly rate from the combined count
+For each clock-hour bin j , divide its combined count C j by its recorded duration:
+ˆλ j =
+C j
+5 × 60
+=
+C j
+300
+calls/minute .
+Examples from the twelve hourly bins:
+Clock-hour bin Combined count C j Recorded minutes ˆλ j
+08:00–09:00 283 300 0.943
+09:00–10:00 510 300 1.700
+· · · · · · · · · · · ·
+19:00–20:00 236 300 0.787
+
+PAGE 56
+6 TIME-V ARYING ARRIV ALS 56
+The estimated hourly arrival rates
+08:00 09:00 10:00 11:00 12:00 13:00 14:00 15:00 16:00 17:00 18:00 19:00 20:00
+Clock time
+0.0
+0.5
+1.0
+1.5
+2.0
+Arrival rate
+(calls/minute)
+Five dates combined (7-11 November 1999): pooled count / 300 minutes per clock-hour.
+Source: T echnion SEE Lab, AnonymousBank; PS arrivals at the voice-response stage (VRU).
+• Together, the twelve rates define the hourly arrival profile for the simulation.
+Next: within each one-hour bin, does a homogeneous Poisson process with
+the corresponding constant rate accurately fit historical arrivals?
+If not, we may need to increase the number of bins.
+
+PAGE 57
+6 TIME-V ARYING ARRIV ALS 57
+Homogeneous Poisson arrivals implies uniform positions
+Consider one bin [ a, b ) . Under a homogeneous Poisson process , conditional on its
+arrival count , the unordered arrival times are independent Uniform ( a, b ) draws .
+• Intuition: no part of the bin is favored. An arrival has probability 1 / 4 of
+falling in its first quarter, 1 / 2 in its first half, and so on.
+• Convert an arrival time t i to its relative position :
+U i =
+t i − a
+b − a
+∈ [0 , 1] .
+• If the homogeneous Poisson assumption holds, then the distribution of U i
+should be close to the uniform F 0 ( u ) = u (0 ≤ u ≤ 1) .
+• This turns the problem into a goodness-of-fit test against the ground-truth
+CDF F 0 ( u ) = u .
+
+PAGE 58
+6 TIME-V ARYING ARRIV ALS 58
+Use the K–S test to check within-bin timing
+For n normalized positions U 1 , . . . , U n , test H 0 : their distribution is Uniform (0 , 1) .
+1. K–S Statistic: compare their empirical CDF G n with F 0 ( u ) = u :
+G n ( u ) = n
+− 1
+∑
+i
+1 { U i ≤ u } , ˆT = sup 0 ≤ u ≤ 1 |G n ( u ) − u |.
+2. Reference distribution: let T be the statistic from a new size- n iid Uniform
+sample. Since F 0 is fixed,
+√
+nT
+d
+− → K , the Kolmogorov distribution.
+(Bootstrap is not needed here because F 0 is not estimated from the data,
+so we can characterize the asymptotic distribution of T analytically.)
+3. Rejection rule for one bin: for one bin at α = 5% , reject if ˆT > 1 . 358 /
+√
+n
+(based on the Kolmogorov distribution), or if the reference p -value is below α .
+4. Rejection rule for multiple bins: with J bins , the rejection level should be
+lowered to α/J according to the Bonferroni criterion :
+• Let E j = { false rejection in bin j } . At level α/J , Pr( E j ) ≤ α/J .
+• By the union bound , the chance of at least one false rejection is
+Pr
+( ⋃
+12
+j =1
+E j
+)
+≤
+∑
+J
+j =1
+Pr( E j ) ≤ J
+α
+J
+= α.
+• Intuition: With multiple bins, the allowed discrepancy between historical
+data and the distribution should be increased to maintain the same α .
+
+PAGE 59
+6 TIME-V ARYING ARRIV ALS 59
+K–S in Python: connect the code to its output
+Teaching code: time_varying_arrivals.py
+• Apply these lines to the full window 08:00–20:00, then to each clock-hour bin:
+141 u = (selected - start) / (end - start)
+142 result = stats.kstest(u, " uniform " , method= " exact " )
+• Returns result.statistic = ˆT (shown as D ) and result.pvalue = p .
+0.0 0.2 0.4 0.6 0.8 1.0
+Normalized arrival position in 08:00–20:00
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0Cumulative fraction
+Entire window: D=0.083, p≈2.9e-28
+Constant-rate reference
+Historical arrival positions
+8 10 12 14 16 18 20
+Clock time (hour)
+10−4
+10−3
+10−2
+10−1
+100
+Approximate KS reference p-value
+09–10: 0.00027
+18–19: 0.00209
+Check all twelve preselected one-hour bins
+0.05 per test
+0.05/12 (12 hourly checks)
+Conditional uniform-position tests under a Poisson null. Whole-second timestamps use a continuous reference approximation.
+Large p-values do not prove homogeneity or Poisson arrivals; day effects and independence need separate checks. Source: T echnion SEE Lab.
+• Full window: reject a single constant rate ( p ≈ 2 . 86 × 10
+− 28
+).
+• Hourly: reject 09:00–10:00 and 18:00–19:00 ( p < 0 . 05 / 12 ).
+
+PAGE 60
+6 TIME-V ARYING ARRIV ALS 60
+Simulate one-day arrivals under piecewise-constant Poisson
+process
+For each bin I j = [ a j , b j ) of length ∆ j , use the fitted rate ˆλ j :
+1. Draw how many arrivals occur: C j ∼ Poisson( ˆλ j ∆ j ) .
+2. Draw where they occur: independently generate C j Uniform ( a j , b j ) times,
+then sort them.
+3. Continue through the bins: use independent draws in each bin as the
+discrete-event simulation progresses.
+
+PAGE 61
+6 TIME-V ARYING ARRIV ALS 61
+Python: supply time-varying arrivals to the DES
+Teaching code: time_varying_arrivals.py
+Clock: 0 = 08:00, 720 = 20:00 (minutes); rates: an array of hourly arrival rates.
+154 def generate_arrivals(rates, rng, edges):
+155 # Edges [0, 60, ..., 720]: minutes since 08:00.
+156 for start, end, rate in zip (edges[:-1], edges[1:], rates):
+157 count = rng.poisson(rate * (end - start))
+158 times = rng.uniform(start, end, size=count)
+159 for time in np.sort(times):
+160 yield time # Supply the DES with one arrival .
+253 rng = np.random.default_rng(34100523)
+254 edges = np.arange(0, 721, 60) # A 720- minute run , starting at 08:00.
+255 arrivals = generate_arrivals(rates, rng, edges)
+256 first_arrival = next (arrivals, np.inf) # Schedule in the FEL .
+• Line 255: create a generator ; its body has not run yet.
+• Line 256: next(...) runs until yield time (line 160), which returns one
+time and pauses , remembering variables and loop position.
+• Lines 159–160: only stores the current hour’s arrival times, then yield them
+one at a time. Move to the next hour when the batch is exhausted.
+Illustration: suppose the first hour generates sorted times [2, 5, 11] .
+• Successive next(...) returns: 2 → 5 → 11 .
+• Then advance through hours; returns np.inf after the last call at the last hr.
+
+PAGE 62
+7 PATIENCE ESTIMATION AND CENSORING 62
+7 Patience Estimation and Censoring
+• So far, we have learned how to fit distributions based on uncensored data .
+• The estimation of patience distributions are typically based on censored data.
+• Let P i be denote the patience time of customer i , and C i their wait until
+service. Instead of directly observing P i , we only observe
+Y i = min( P i , C i ) , δ i = 1 { P i < C i } .
+Outcome Record What it tells us about patience
+Abandons ( Y i , δ i ) = ( y, 1) Patience ends at y : observe P i = y .
+Enters service ( Y i , δ i ) = ( y, 0) Patience has not ended: P i > y .
+• The served customer’s patience time is right-censored by their wait.
+• Fitting the patience distribution using abandoned calls alone ( δ i = 1 )
+describes P | P < C , only a selected subset.
+• For calls entering services ( δ i = 0 ), treating their waiting times as patience
+times is also incorrect .
+
+PAGE 63
+7 PATIENCE ESTIMATION AND CENSORING 63
+Prepare historical data for patience estimation
+Use the same PS calls, 7–11 November 1999 , focusing on calls that need to queue:
+Successive rule Records
+All PS calls in the selected dates 5,684
+Recorded queue entry 3,333
+Remove 44 PHANTOM records 3,289
+HANG : y i = q_time , δ i = 1 539
+AGENT : y i = q_time , δ i = 0 2,750
+
+PAGE 64
+7 PATIENCE ESTIMATION AND CENSORING 64
+Modified MLE for censored records
+• Let f ( s ; ϑ ) be a candidate probability density, where ϑ denote the parameters
+to be estimated.
+• Let G ( t ; ϑ ) := Pr( P > t ; ϑ ) =
+∫
+∞
+t
+f ( s ; ϑ ) ds be the complementary CDF.
+• For censored historical data ( y 1 , δ 1 ) , . . . , ( y n , δ n ) , the likelihood of this data
+being generated is:
+L ( ϑ ; s 1 , . . . , s n ) =
+∏
+i
+f ( y i ; ϑ )
+δ i
+G ( y i ; ϑ )
+1 − δ i
+.
+– An abandonment at y i contributes the density f P ( y i ; ϑ ) .
+– Service starting at y i contributes the survival probability G P ( y i ; ϑ ) .
+
+PAGE 65
+7 PATIENCE ESTIMATION AND CENSORING 65
+Exponential patience: derive the censored-data MLE
+Assume iid exponential patience with rate α > 0 and independent right censoring.
+Write d =
+∑
+i
+δ i > 0 (abandonments) and S =
+∑
+i
+y i > 0 (total observed wait).
+1. Substitute: f ( y ; α ) = αe
+− αy
+, G ( y ; α ) = e
+− αy
+for y ≥ 0 .
+L ( α ) =
+∏
+i
+( αe
+− αy i )
+δ i ( e
+− αy i )
+1 − δ i = α
+d
+e
+− αS
+.
+2. Take logs and differentiate:
+ℓ ( α ) = d log α − αS + constant , ℓ
+′
+( α ) = d/α − S = 0 .
+Since ℓ
+′′
+( α ) = − d/α
+2
+< 0 , this gives the maximum:
+ˆα =
+d
+S
+, estimated mean patience =
+1
+ˆα
+=
+S
+d
+.
+Compare with the uncensored case. If d = n (all abandonments and effectively no
+censoring), the estimate reduces to the sample mean S/n .
+With censoring, 0 < d < n , so
+S
+d
+>
+S
+n
+.
+Accounting for censoring gives a longer estimated mean patience .
+Why? A served customer’s actual patience exceeds their observed wait y i , so all
+waits add time at risk.
+
+PAGE 66
+7 PATIENCE ESTIMATION AND CENSORING 66
+Week 5 summary
+• Start with available historical data. Scope, clean, and explore the records to
+identify estimable inputs and differences across groups or periods.
+• Fit a parametric distribution. MOM matches moments; MLE maximizes
+likelihood. Under regularity and correct specification, both have n
+− 1 / 2
+error
+but can differ in asymptotic variance.
+• Use a nonparametric alternative. Resampling the empirical distribution
+avoids a prescribed family, but cannot go beyond the historical range.
+• Assess goodness of fit. K–S checks the largest CDF gap; A–D emphasizes
+tails; Chi-square checks bin counts.
+• Allow time-varying arrivals. Estimate each hourly rate as count/exposure;
+check within-hour homogeneity and generate arrivals using the fitted rates.
+• Account for censored patience. modify MLE to include survival probability in
+the likelihood. Kaplan–Meier estimates survival nonparametrically with right
+censoring ( outside this lecture ).

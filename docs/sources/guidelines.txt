@@ -1,0 +1,95 @@
+1 
+Team Project Guidelines  
+SEEM3410 System Modeling and Simulation | 2026 –27 Term 1  
+Work in a team of 2–3 students to model and analyze a real-world service system, implement a 
+discrete-event simulation in Python, and use the results to recommend an operational policy. Your 
+report should make a clear connection between the practical problem, the model, the experimental 
+evidence, and the recommended action. 
+Choose a system with a manageable scope and specific decisions to study, such as staffing, 
+queue discipline, resource allocation, inventory control, or service routing. Explain the current 
+practice and the improvements you will evaluate.  
+Project timeline 
+Date Milestone and preparation 
+5 November Preliminary project clinic. Have a topic and initial progress; bring a decision question, 
+a system sketch, available data or an input plan, and questions for feedback. 
+24 and 26 
+November Main project clinics. The project should be close to complete by then. 
+Before 1 
+December Submit the final report. 
+1 and 3 
+December Each team gives a 10-minute in-class presentation on its assigned date. 
+Report length and format 
+The report must be no more than eight A4 pages in total, including title information, figures, tables, 
+references, and any appendices. Put the project title, team members, and student IDs at the top of 
+the first page. Use a readable 11-point font or larger, margins of at least 2 cm, and page numbers. 
+Submit the report as a PDF. Keep Python code and supporting data in a separate reproducibility 
+package. 
+Suggested report structure 
+These are suggestions. Adjust them to suit your project. 
+Section Content 
+1 System and decision problem 
+2 Data and input analysis 
+3 Discrete-event simulation model and implementation 
+4 Experiment design 
+5 Results and discussion 
+6 Sensitivity analysis 
+7 Recommendations and policy brief 
+ 
+2 
+1 System and decision problem 
+Describe the system, its users, and the operational problem. State a focused question that the 
+simulation will answer and identify the decisions under your control. 
+Explain the system boundary, the current operating policy, and the main assumptions. A compact 
+process or network diagram can show customer or material flows, queues, and resources. Define 
+your primary performance measure and any service or resource constraints. 
+2 Data and input analysis 
+Identify your data sources and, where applicable, the collection period, sample size, and any 
+cleaning or aggregation. Distinguish observed data from published estimates, assumed values, 
+and synthetic inputs. If direct data are limited, explain the basis of your assumptions and how you 
+will test their effect. 
+Summarize the important inputs in a small table: input, source, distribution or rule, parameter 
+values, and units. Explain how the distributions and parameters were chosen, using plots or fitting 
+evidence where appropriate. Address time variation, customer classes, or dependence when these 
+affect the decision.  
+3 Simulation model and Python implementation 
+Explain the events and how each changes the state, schedules future events, and collects 
+statistics. A pseudocode showing high-level logic is usually clearer than a long code listing. 
+Explain the Python implementation and how each candidate policy changes its logic. State the 
+initial conditions and stopping rule. Define how each reported measure is calculated, including the 
+treatment of warm-up observations and customers or orders unfinished at the measurement 
+boundary. Keep the detailed source code in the separate package. 
+4 Experiment design 
+Define a baseline representing the current or reference policy and a manageable set of feasible 
+alternatives. List what changes between scenarios and what remains fixed so that the comparisons 
+answer your decision question. 
+Describe how you will estimate uncertainty and compare policies. Use common random numbers 
+to preserve matched random inputs and analyze policy differences within each replication. Justify 
+your run lengths and replication counts for your system and decision question. 
+5 Results and discussion 
+Present the comparisons that answer the decision question. Use a small number of well-labeled 
+tables or figures with units, scenario definitions, and confidence intervals for the main estimates or 
+policy differences. Report the size of an improvement relative to the stated baseline and explain 
+the operating mechanism behind it. Discuss trade-offs among cost, waiting, service quality, and 
+resource use as relevant. 
+6 Sensitivity analysis 
+Examine how your conclusions change when important inputs or assumptions vary. Select a small 
+number of influential or uncertain inputs, such as arrival rates, service times, customer behavior, or 
+costs. Define the scenarios and explain whether inputs are varied separately or jointly. 
+Compare the baseline and promising policies under these scenarios. Present the effects on key 
+performance measures and explain whether the preferred policy changes. Identify the conditions 
+under which your recommendation remains appropriate and any thresholds at which a different 
+action is preferable. 
+ 
+3 
+7 Recommendations and policy brief 
+End with a short policy brief of approximately 150–200 words for the decision maker. State the 
+action you recommend, its estimated benefit relative to the baseline, and the main service or 
+resource trade-off. Explain when the recommendation applies and its principal limitation. 
+ 
+Submission package 
+Submit one PDF report and one ZIP file per team. The ZIP file should contain the Python scripts, 
+the input data needed to reproduce the results, and a short README. The README should give 
+the software requirements, run instructions, and seeds or configuration needed to reproduce the 
+main results. 
+ 
+ 

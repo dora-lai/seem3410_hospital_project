@@ -1,0 +1,30 @@
+SEEM3410 Project Proposal:
+Doctor Staffing Policy in a Hospital Outpatient Clinic
+Team members: Lai Sin Hang 1155213900, Lee Ka Tung 1155212062
+1. Service system and improvement question
+We will model a hospital outpatient clinic using simulation data from Kaggle. Patients arrive at random, wait for a consultation, and collect their medication from a single pharmacy counter before leaving. Arrivals are more frequent in the first 240 minutes and may continue after the peak. Doctors use a non-preemptive priority queue: Priority 3 is highest, patients within each class are served on a first-come, first-served (FCFS) basis, and ongoing consultations are not interrupted. The pharmacy also uses FCFS.
+Improvement question: Which staffing level (2, 3, or 4 doctors) can achieve a 90th-percentile doctor waiting time (P90) of 15 minutes or less at the lowest cost? For each policy, our primary measure is the average of the run-level P90 values, each calculated using all 200 patients in that run. We will also break down doctor waits by priority class and examine waits for patients who arrive during the peak. Other measures include mean doctor waiting time, pharmacy waiting time, mean total time in the hospital, doctor and pharmacy utilization, and staffing cost.
+2. Decision levers
+We will compare three staffing policies, with two doctors as the baseline.
+Only the number of doctors changes across these policies. The arrival pattern, priority mix, service-time distributions, and queue rules are held fixed. We will estimate staffing cost using an assumed hourly wage for doctors and the same shift length for all policies.
+Adding doctors may shorten the wait for a consultation but increase congestion at the pharmacy. As a secondary analysis, we will test whether a second pharmacy counter reduces pharmacy waits and total time in the hospital.
+3. Sources of randomness, data and method
+Data and assumptions
+The Kaggle dataset Hospital Queue and Patient Flow Simulation (hospital_sim_6_scenarios.csv) contains 60,000 synthetic patient records across six scenarios, with 50 runs of 200 patients per scenario. We will use mainly the two-doctor baseline to estimate four model inputs:
+Patient arrivals: The arrival pattern during and after the peak.
+Patient priority: The proportions of patients in Priority 1, 2, and 3.
+Doctor service time: The distribution of consultation durations.
+Pharmacy service time: The distribution of medication processing times.
+Waiting times reconstructed under the non-preemptive priority rule were consistent with the recorded values, so we will use the rule in our simulation. Since the dataset is synthetic, we will state the assumptions behind our input estimates.
+Simulation design
+Our discrete-event simulation (DES) in Python will track arrivals, consultations, pharmacy service, and departures. Each run generates 200 patients, including arrivals after the peak, and ends when the last patient leaves.
+Each staffing policy will be evaluated over 50 replications. Common random numbers (CRN) give the policies the same arrivals, priorities, and service requirements within each replication, so they are compared under the same conditions.
+Analysis and validation
+We will compare policies using paired differences in run-level P90 and report 95% confidence intervals for the mean differences. The other staffing scenarios in the dataset will serve as a consistency check.
+Sensitivity analyses will vary arrival rates, consultation times, pharmacy capacity, and doctor wages. We will also test targets of 10, 20, and 30 minutes alongside the 15-minute target. The aim is to identify the lowest-cost staffing policy that meets the service target and assess how the recommendation changes under different operating conditions.
+Dataset: https://www.kaggle.com/datasets/juneminazuki/hospital-queue-and-patient-flow-simulation
+
+Policy | Doctors | Doctor queue | Pharmacy
+Baseline | 2 | Priority Queue | 1 counter, FCFS
+Policy A | 3 | Priority Queue | 1 counter, FCFS
+Policy B | 4 | Priority Queue | 1 counter, FCFS

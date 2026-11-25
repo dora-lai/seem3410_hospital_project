@@ -1,0 +1,13 @@
+variable,value,probability
+Priority,1,0.6577
+Priority,2,0.2938
+Priority,3,0.0485
+DocServiceTime,10,0.2947
+DocServiceTime,13,0.351
+DocServiceTime,15,0.2017
+DocServiceTime,18,0.1038
+DocServiceTime,20,0.0488
+MedServiceTime,2,0.352
+MedServiceTime,3,0.3991
+MedServiceTime,4,0.1491
+MedServiceTime,5,0.0998

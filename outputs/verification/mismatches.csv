@@ -1,0 +1,1 @@
+RunID,PatientID,ArrivalTime,Priority,DoctorID,DocServiceTime,MedServiceTime,DocWaitTime_source,MedWaitTime_source,TotalTimeInHospital_source,IsPeakArrival,Scenario,NumDoctors,PeakLimit,DocWaitTime_sim,MedWaitTime_sim,TotalTimeInHospital_sim,DocWaitTime_error,MedWaitTime_error,TotalTimeInHospital_error

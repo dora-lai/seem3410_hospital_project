@@ -1,0 +1,7 @@
+# Actual algorithm
+1. Validate only the five input columns; copy inputs. Put all doctor arrivals into heapq FEL (time,type rank,sequence,patient,doctor). Arrival rank precedes completion.
+2. Advance clock to next FEL event. Arrival: enqueue (-priority,arrival,PatientID), then dispatch idle doctors after batching arrivals tied at that time. Completion: release doctor, dispatch highest eligible waiting patients. Service starts are immediate routine actions; push each completion. Consultations never preempt.
+3. Drain doctor FEL. This is not an integrated two-stage FEL. Because pharmacy never blocks doctors, process completed consultations sorted (DocEnd,PatientID), assigning each to earliest-available counter, counter ID as tie-break. Pharmacy start=max(DocEnd,counter availability); update end/availability. All patients depart exactly once.
+4. Recover queue and busy intervals. Exact clipped overlap integrals yield utilization in common [0,240] and [0,H] windows; independent event sweep yields waiting queue area and maximum. Report doctor event trace separately; pharmacy has an availability calendar, no claimed pharmacy FEL trace.
+
+Simultaneous external arrivals are batched before idle dispatch to respect priority among all eligible arrivals. Source traces have strictly positive gaps, so this generalization has no effect on source replay. Event rank differs from patient priority; sequence only resolves equal FEL keys.

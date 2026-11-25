@@ -1,0 +1,12 @@
+0.02s 0-1 Source review and frozen model specification
+3.43s 2 Audit/calibration
+4.16s 3 Analytical capacity checks
+4.16s 4-5 DES unit tests and all-source reconstruction
+11.03s 6 Generate random inputs and verify matched streams
+12.28s 7 Main fresh and replay experiments
+19.01s 8 Run-level inference and fresh confirmation
+22.43s 9 Sensitivity and factorial interaction
+56.48s 10 Costs and computed recommendation
+56.56s 11 Figures/tables/seven-section report
+59.77s 12 Presentation materials and acceptance gates
+60.00s Testing full workflow from extracted ZIP

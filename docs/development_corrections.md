@@ -1,0 +1,7 @@
+# Corrections found during actual execution
+1. Initial environment installation was restarted after an interrupted tool session; isolated project virtual environment was established.
+2. Initial target-summary integration failed because patient outputs lacked doctor/counter metadata. Added these fields generically, added an integration regression test, and regenerated dependent experiments.
+3. Fractional arrival perturbations exposed floating arithmetic around intended simultaneous times. A future arrival differed from completion by about1e-12 minute. Added configurable nine-decimal time resolution for generated inputs and completion clocks, tightened eligibility to actual chronological order, and added a fractional tie regression test. Full original reconstruction remains exact. This is a general numerical rule, not an individual-patient patch.
+4. PDF visual QA found tight table headers, touching CI cells and overlapping enlarged flow labels. Rebalanced column widths, used two-line intervals in the selected sensitivity table, and shortened flow labels. Full sensitivity data remain in CSVs.
+5. Presentation finalization required explicit native-table validation flags. Added the flags for each native table slide and reran validation.
+These development failures are not suppressed as final successes; final clean-run logs and extracted-package reproduction are the acceptance evidence.

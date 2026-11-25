@@ -1,0 +1,35 @@
+{
+  "expected_figure_files": 21,
+  "actual_figure_files": 21,
+  "expected_files": [
+    "figures/system_flow.png",
+    "figures/system_flow.svg",
+    "figures/arrival_profile.png",
+    "figures/arrival_profile.svg",
+    "figures/input_pmfs.png",
+    "figures/input_pmfs.svg",
+    "figures/input_fit.png",
+    "figures/input_fit.svg",
+    "figures/arrival_ecdf.png",
+    "figures/arrival_ecdf.svg",
+    "figures/main_p90_ci.png",
+    "figures/main_p90_ci.svg",
+    "figures/priority_peak.png",
+    "figures/priority_peak.svg",
+    "figures/resource_cost.png",
+    "figures/resource_cost.svg",
+    "figures/sensitivity.png",
+    "figures/sensitivity.svg",
+    "figures/attainment.png",
+    "figures/attainment.svg",
+    "figures/captions.md"
+  ],
+  "directory_file_counts": {
+    "data": 21,
+    "verification": 7,
+    "experiments": 12,
+    "tables": 26,
+    "figures": 21,
+    "reproducibility": 4
+  }
+}

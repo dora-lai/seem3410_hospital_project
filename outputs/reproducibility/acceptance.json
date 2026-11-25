@@ -1,0 +1,38 @@
+{
+  "gate": "PASS",
+  "checks": [
+    {
+      "artifact": "main",
+      "run_rows": 150,
+      "patient_rows": 30000,
+      "matched_hashes": true,
+      "valid_KPIs": true
+    },
+    {
+      "artifact": "replay",
+      "run_rows": 150,
+      "patient_rows": 30000,
+      "matched_hashes": true,
+      "valid_KPIs": true
+    },
+    {
+      "artifact": "confirmation",
+      "run_rows": 150,
+      "patient_rows": 30000,
+      "matched_hashes": true,
+      "valid_KPIs": true
+    },
+    {
+      "artifact": "sensitivity (includes reused primary base)",
+      "run_rows": 1500,
+      "patient_rows": 300000,
+      "matched_hashes": true,
+      "valid_KPIs": true
+    }
+  ],
+  "source_replay_records": 60000,
+  "source_replay_run_count": 300,
+  "unique_experiment_runs": 1800,
+  "experiment_patient_policy_records": 360000,
+  "zero_mismatches": true
+}

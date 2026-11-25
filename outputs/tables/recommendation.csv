@@ -1,0 +1,13 @@
+experiment,condition,target,point_choice,supported_choice,uncertain_candidates,rule
+confirmation,base,15,3,3,none,minimum scheduled doctor cost; second counter performance only
+empirical,arrivals_fast,15,4,4,none,minimum scheduled doctor cost; second counter performance only
+empirical,arrivals_slow,15,3,3,none,minimum scheduled doctor cost; second counter performance only
+empirical,base,15,3,3,none,minimum scheduled doctor cost; second counter performance only
+empirical,doctor_fast,15,3,3,none,minimum scheduled doctor cost; second counter performance only
+empirical,doctor_slow,15,4,4,none,minimum scheduled doctor cost; second counter performance only
+empirical,pharmacy_slow,15,3,3,none,minimum scheduled doctor cost; second counter performance only
+empirical,two_counters,15,3,3,none,minimum scheduled doctor cost; second counter performance only
+poisson,arrivals_fast,15,4,4,none,minimum scheduled doctor cost; second counter performance only
+poisson,base,15,4,4,none,minimum scheduled doctor cost; second counter performance only
+poisson,doctor_slow,15,4,4,none,minimum scheduled doctor cost; second counter performance only
+replay,base,15,3,3,none,minimum scheduled doctor cost; second counter performance only

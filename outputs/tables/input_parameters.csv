@@ -1,0 +1,11 @@
+input,source,rule,parameters,unit
+gap_peak,estimated from synthetic baseline,empirical PMF,"{""values"": [3.0, 4.0, 5.0, 6.0, 7.0], ""probabilities"": [0.26203966005665724, 0.386685552407932, 0.19440509915014165, 0.10162889518413598, 0.05524079320113314], ""n"": 2824}",minutes
+gap_late,estimated from synthetic baseline,empirical PMF,"{""values"": [3.0, 4.0, 5.0, 6.0, 7.0], ""probabilities"": [0.10326086956521739, 0.09671125975473802, 0.20220178372352285, 0.40621516164994426, 0.19161092530657747], ""n"": 7176}",minutes
+Priority,estimated from synthetic baseline,empirical PMF,"{""values"": [1.0, 2.0, 3.0], ""probabilities"": [0.6577, 0.2938, 0.0485], ""n"": 10000}",class
+DocServiceTime,estimated from synthetic baseline,empirical PMF,"{""values"": [10.0, 13.0, 15.0, 18.0, 20.0], ""probabilities"": [0.2947, 0.351, 0.2017, 0.1038, 0.0488], ""n"": 10000}",minutes
+MedServiceTime,estimated from synthetic baseline,empirical PMF,"{""values"": [2.0, 3.0, 4.0, 5.0], ""probabilities"": [0.352, 0.3991, 0.1491, 0.0998], ""n"": 10000}",minutes
+peak_rate,estimated from synthetic baseline,Poisson alternative,0.23116666666666666,patients/minute
+late_rate,estimated from synthetic baseline,Poisson alternative,0.18286263791881768,patients/minute
+wage,illustrative assumption,fixed,100.0,cost units/doctor-hour
+schedule,illustrative assumption,fixed,1080.0,minutes
+target,illustrative assumption,fixed,15.0,minutes

@@ -1,0 +1,6 @@
+Input,Fitted distribution / parameter,Source / units
+Arrival gap,Peak previous-clock PMF on 3-7; late PMF on 3-7,Synthetic baseline / min
+Priority,1: 0.6577 / 2: 0.2938 / 3: 0.0485,Synthetic baseline / class
+Consultation,10/13/15/18/20; mean 13.38,Synthetic baseline / min
+Pharmacy,2/3/4/5; mean 3.00,Synthetic baseline / min
+Poisson alternative,0.23117 peak; 0.18286 late,Estimated / patients/min
