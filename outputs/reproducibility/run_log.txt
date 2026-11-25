@@ -10,3 +10,4 @@
 56.56s 11 Figures/tables/seven-section report
 59.77s 12 Presentation materials and acceptance gates
 60.00s Testing full workflow from extracted ZIP
+146.50s Extracted run and deterministic hash checks PASS: {"zip": "submission/SEEM3410_reproducibility.zip", "members": 7264, "status": "PASS", "full_extracted_run": true, "exit_code": 0, "deterministic_artifacts_compared": 62, "mismatching_hashes": 0, "wall_seconds": 57.06468345801113, "extracted_tests": "31 passed in 2.31s", "archive_members_initial": 7262, "local_absolute_path_dependency": false}
